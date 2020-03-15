@@ -62,6 +62,10 @@ while [ ! -f ${STOP_FLAG} ]; do
 		REVISION_FILE="./${job##*/}.rev"
 		COMPILER_LOGFILE="$PWD/${job##*/}.log"
 		echo "=>Job is ${job}" | tee "${COMPILER_LOGFILE}"
+		if [ ! -r "${REVISION_FILE}" ]; then
+			echo "- 1st time init ${REVISION_FILE} to LAST_GOOD_REV=0 LAST_TRIED_REV=-1" | tee -a "${COMPILER_LOGFILE}"
+			tools_update_used_versions "${REVISION_FILE}" 0 -1 2>&1 | tee -a "${COMPILER_LOGFILE}"  # setting last tried below last good forced 1st time compilation
+		fi
 		if [ -r "${REVISION_FILE}" ]; then
 			source "${REVISION_FILE}"
 			echo "LAST_GOOD_REV=${LAST_GOOD_REV}, LAST_TRIED_REV=${LAST_TRIED_REV}" | tee -a "${COMPILER_LOGFILE}"
@@ -88,7 +92,7 @@ while [ ! -f ${STOP_FLAG} ]; do
 			# echo "LastEditors=${LastEditors}"
 			if [ "YES" == $(${CHECK_SANDBOX} "${SANDBOX}") ]; then
 				echo "- is a ${VSCNAME} sandbox, ok" | tee -a "${COMPILER_LOGFILE}"
-				if [ "YES" == $(${IF_CHANGED} "${SANDBOX}") ]; then
+				if [ "YES" == $(${IF_CHANGED} "${SANDBOX}") -o ${LAST_GOOD_REV} -gt ${LAST_TRIED_REV} ]; then
 					echo "- is more recent on the server, need to dive in ..." | tee -a "${COMPILER_LOGFILE}"
 					echo "invoking ${VCS_UPDATE} ${SANDBOX}" | tee -a "${COMPILER_LOGFILE}"
 					${VCS_UPDATE} "${SANDBOX}" 2>&1 | tee -a "${COMPILER_LOGFILE}"
