@@ -1,0 +1,7 @@
+# on_unchanged
+
+function unchanged {
+	# arg1: Time to Sleep
+	# arg2: Sandbox
+	sleep ${1}
+}

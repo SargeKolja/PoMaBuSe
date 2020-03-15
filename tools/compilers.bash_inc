@@ -1,0 +1,21 @@
+# definition of the compilers. the Job file typically uses sth. like
+#		COMPILE="${COMPILE_MAKE} ${SANDBOX}/Makefile"
+# with here defined
+#		COMPILE_MAKE='make ${MAKE_ON_X_CORES} -f'
+# it will become
+#		COMPILE="make -j 4 -f ${SANDBOX}/Makefile"
+# and pumabuse is invoking "$(COMPILE)", which will become
+#		make -j 4 -f ../some/where/Makefile"
+#
+#  ATN!   command line args behind the executables name requiring the whole value to get enclosed in single or double quotes!!
+#         use double qoutes if you're using ${} or $() patterns inside ...
+
+COMPILE_BASH=bash
+COMPILE_MAKE="make ${MAKE_ON_X_CORES} -f"
+COMPILE_QMAKE=qmake
+COMPILE_QMAKE4='qmake -qt=4'
+COMPILE_QMAKE5='qmake -qt=5'
+
+ COMPILE_FAKEGOOD=/bin/true 
+
+ COMPILE_FAKEBAD= /bin/false 
