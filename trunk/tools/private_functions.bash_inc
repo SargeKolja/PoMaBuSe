@@ -123,6 +123,15 @@ function tools_update_used_versions {
 
 
 ######################################################################################################
+function CHECK_sendmail_report_engine {
+	if which sendmail; then
+		echo "OKAY"
+	else
+		echo "MISSING"
+	fi
+}
+
+######################################################################################################
 # usually called as:
 #		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
 #		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
@@ -191,6 +200,11 @@ function sendmail_report_engine {
 
 
 ######################################################################################################
+function CHECK_stderr_report_engine {
+	echo "OKAY"
+}
+
+######################################################################################################
 # usually called as:
 #		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
 #		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
@@ -229,6 +243,12 @@ function stderr_report_engine {
 
 
 
+
+######################################################################################################
+function CHECK_default_report_engine {
+	CHECK_sendmail_report_engine
+}
+
 ######################################################################################################
 # usually called as:
 #		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors}
@@ -243,7 +263,7 @@ function default_report_engine {
 	#arg7..n = list of receiver names
 
 	echo "reporting via default_report_engine $@"
-	stderr_report_engine "$@"
+	sendmail_report_engine "$@"
 }
 
 
