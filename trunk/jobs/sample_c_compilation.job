@@ -14,7 +14,7 @@ GET_RELEASEID=${VSCNAME}_scan_release						#	name of the Release-Scanner (a bash
 SCAN_AUTHORS=${VSCNAME}_scan_authors						#	name of the changes authors collector
 GET_LAST_CHANGES=${VSCNAME}_append_log_to_file				#	name of the changelog collector
 VCS_CHECKOUT="${VCSTOOL} checkout -r ${REVISION} ${URL}${VCSTRUNK}"	#  ${SANDBOX} is automatically appended, how to get fresh
-VCS_UPDATE="${VCSTOOL} update -r ${REVISION} ${SANDBOX}"	# ${SANDBOX} is automatically appended, how to get updated
+VCS_UPDATE="${VCSTOOL} update -r ${REVISION}"				# ${SANDBOX} is automatically appended, how to get updated
 REPORT_ENGINE=sendmail_report_engine						# function to report from tools*.bash_inc, i.e. mail sending DO NOT USE QUOTES on function names!
 # --- this block 
 
