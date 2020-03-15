@@ -1,6 +1,7 @@
 #include <stdio.h>
 
-/* Compilation & linking:
+/* == a simple Demo ==
+ * Compilation & linking:
  *      gcc -Os helloworld.c -o helloworld
  *      strip helloworld  [.exe on MSYS/Cygwin/...]
  *
