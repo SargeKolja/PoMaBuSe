@@ -73,7 +73,7 @@ while [ ! -f ${STOP_FLAG} ]; do
 		tools_dump_jobdetails "${job}" | tee -a "${COMPILER_LOGFILE}"
 		if [ "OKAY" != "$(CHECK_${REPORT_ENGINE})" ]; then
 			echo "missing report engine, can't report this" | tee -a "${COMPILER_LOGFILE}"
-			$(CHECK_${REPORT_ENGINE}) 2>&1  | tee -a "${COMPILER_LOGFILE}"
+			CHECK_${REPORT_ENGINE} 2>&1  | tee -a "${COMPILER_LOGFILE}"
 			stderr_report_engine $? "FAILED" "${FromMail}" "${ProjectName}" "1" "${COMPILER_LOGFILE}" "${FromMail}"
 		fi
 		echo "-----------------------------------------" | tee -a "${COMPILER_LOGFILE}"
