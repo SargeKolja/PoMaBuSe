@@ -1,0 +1,15 @@
+# svn.check_sandbox
+
+function svn_scan_changes {
+	# arg 1; sandbox path
+	local SandBox=${1}
+	LANG=C
+	#if svn status -u -q ${SandBox} | grep -E '^........\*' >/dev/null; then
+	if svn status -u -q ${SandBox} | grep -E '^........\*' >&2; then
+		# Has Changes
+		echo "YES"
+	else
+		# SandBox in Sync with Server
+		echo "NO"
+	fi
+}

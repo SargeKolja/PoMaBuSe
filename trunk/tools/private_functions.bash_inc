@@ -1,0 +1,250 @@
+# private functions, please no private changes - except improvements for all.
+# please commit your changes back to the project
+
+
+######################################################################################################
+function trim {
+    local var="$*"
+    var="${var#"${var%%[![:space:]]*}"}"	# trim leading whitespace
+    var="${var%"${var##*[![:space:]]}"}"	# trim trailing whitespace
+    # printf '%s' "$var"
+	echo -n "${var}"
+}
+
+
+######################################################################################################
+function trimbetween {
+	echo -e "${*}" | tr -d '[:space:]'
+}
+
+
+######################################################################################################
+function random-string {
+    cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-32} | head -n 1
+}
+
+
+######################################################################################################
+function get_tempname {
+	echo "/tmp/$(random-string 16)"
+}
+
+
+######################################################################################################
+declare -A MailOf
+######################################################################################################
+
+
+######################################################################################################
+function read_mail_alias {
+	# arg1 ... n : names of mail alias lists
+	# no alias is okay, then we have no aliases and names are adresses
+	# echo "read_mail_alias '$@'"
+	for aliasfile in "$@"; do
+		if [ -r "${1}" ]; then
+			# echo "--- reading eMail alias' from ${aliasfile}"
+			while IFS="=#:" read -r key value comment; do
+				key=$(trim ${key})
+				value=$(trimbetween ${value})
+				# echo "'${key}':'${value}'"
+				if [ -z "${key}" ]; then continue; fi
+				if [ -z "${value}" ]; then continue; fi
+				MailOf[${key}]="${value}"
+			done < "${aliasfile}"
+		# echo "now ${#MailOf[@]} aliases since ${aliasfile}"
+		fi
+	done
+	# echo "got ${#MailOf[@]} aliases total"
+}
+
+
+######################################################################################################
+function replace_mail_alias {
+	# arg 1...n : list of names which might be aliased
+	 echo "replace_mail_alias '$@'" >&2
+	local replaced=""
+	local liste=""
+	local result=""
+	# for user in ${@}; do
+	for user in ${@//,/$IFS}; do
+		# echo "replacing ${user}..." >&2
+		replaced=${MailOf[${user}]}
+		# echo "replaced ${user} by ${replaced}" >&2
+		if [ -z "${replaced}" ]; then replaced=${user}; fi
+		# echo "replaced ${user} by ${replaced}" >&2
+		liste="${liste}${replaced}\n"
+		liste="$(echo -n "${liste}" | tr ',' '\n')"
+	done
+	replaced=$(trim $(echo -e "${liste}" | sort | uniq | tr '\n' ','))
+	result=${replaced%,}
+	result=${result#,}
+	echo "${result}"
+}
+
+
+######################################################################################################
+# dump most/all parameters of sourced job
+function tools_dump_jobdetails {
+	# arg1: jobfile name (complete with [relative] path)
+	# arg1 - currently not used
+	#
+	echo "ProjectName=${ProjectName}"
+	echo "VSCNAME=${VSCNAME}"
+	# echo "VCSTOOL=${VCSTOOL}"
+	# echo "URL=${URL}"
+	echo "SVN_CREDS=${SVN_CREDS}"
+	echo "MAIL_CREDS=${MAIL_CREDS}"
+	# echo "SANDBOX=${SANDBOX}"
+	# echo "VCSTRUNK=${VCSTRUNK}"
+	# echo "REVISION=${REVISION}"
+	echo "CHECK_SANDBOX=${CHECK_SANDBOX}"
+	echo "IF_CHANGED=${IF_CHANGED}"
+	echo "GET_RELEASEID=${GET_RELEASEID}"
+	echo "VCS_CHECKOUT=${VCS_CHECKOUT}"
+	echo "VCS_UPDATE=${VCS_UPDATE}"
+	echo "COMPILE=${COMPILE}"
+	echo "REPORT_ENGINE=${REPORT_ENGINE}"
+}
+
+
+######################################################################################################
+# usually called as:
+#		 tools_update_used_versions "${REVISION_FILE}" "${LAST_GOOD_REV}" "${LAST_TRIED_REV}"
+function tools_update_used_versions {
+	# arg1 jobname based *.rev file which holds the versions / revisions / git hashes / ...
+	# arg2 last successfully compiled version ( / revision / hash ... )
+	# arg3 last tried to compile  version ( / revision / hash ... )
+	local RevFile=${1}
+	local lastGood=${2}
+	local lastAttempt=${3}
+	echo "LAST_GOOD_REV=${lastGood}"      > "${RevFile}"
+	echo "LAST_TRIED_REV=${lastAttempt}" >> "${RevFile}"
+}
+
+
+######################################################################################################
+# usually called as:
+#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#
+# sendmail alternative on MSYS2: "mSMTP"
+#		pacman -S mingw-w64-i686-msmtp mingw-w64-i686-libsecret
+# sendmail alternative on Ubuntu/Debian: "mSMTP" or Nullmailer, I prefer mSMTP here since years
+#
+function sendmail_report_engine {
+	#arg1 = last exit code of compiler
+	#arg2 = "SUCCESS"/"FAILED"
+	#arg3 = Sender Mail Address (From:)
+	#arg4 = Name of the compiled Project (short, handy name)"
+	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
+	#arg6 = logfile with compiler output
+	#arg7..n = list of receiver names
+	echo "reporting via sendmail_report_engine $@"
+	local lasterr=${1}
+	local status=${2}
+	local FromMail=${3}
+	local ProjectName=${4}
+	local Revision=${5}
+	local logfile=${6}
+	shift 6
+	local receivers=$@
+	
+	mail_complete=$(get_tempname).mail.txt
+
+	read_mail_alias ${CredsDir}/*.alias
+	receivers=$(replace_mail_alias "${receivers}")
+	echo "to these mails:'${receivers}'"
+	
+	FromMail=$(replace_mail_alias "${FromMail}")
+	
+	# --- todo: make a HEREDOC with placeholders? ---
+	echo -en "From: ${FromMail}\n"                                                      > ${mail_complete}
+	#-nn- for recipient in ${receivers//,/$IFS}; do
+	#-nn- 	echo -en "To: ${recipient}\n"                                              >> ${mail_complete}
+	#-nn- done
+	echo -en "To: ${receivers}\n"                                                      >> ${mail_complete}
+	echo -en "MIME-Version: 1.0\n"                                                     >> ${mail_complete}
+	echo -en "Content-Type: text/plain; charset=utf-8\n"                               >> ${mail_complete}
+	echo -en "Content-Transfer-Encoding: 8bit\n"                                       >> ${mail_complete}
+	echo -en "Subject: ${status} compiled of ${ProjectName} rev ${Revision}\n"         >> ${mail_complete}
+	echo -en "\n"                                                                      >> ${mail_complete}
+
+	echo -en "reporting ${ProjectName} rev ${Revision} has compiled with ${status}, code=${lasterr}\n" >> "${mail_complete}"
+	echo -en "Please refer the embedded logfile '${logfile}'\n"                        >> "${mail_complete}"
+	echo -en "---- logfile starts here: --------------------------------\n"            >> "${mail_complete}"
+	cat "${logfile}"                                                                   >> "${mail_complete}"
+	echo -en "---- logfile ends here. ----------------------------------\n"            >> "${mail_complete}"
+	echo -en "\n<EOT>\n\n"                                                             >> "${mail_complete}"
+	
+	echo "invoking sendmail for ${receivers} ..."
+	# cat ${mail_complete} | sendmail -d -- ${receivers}
+	cat ${mail_complete} | sendmail ${receivers}
+	if [ $? -eq 0 ]; then
+		head -2 ${mail_complete}
+		rm -f ${mail_complete}
+		echo "DONE."
+	else
+		echo "FAILED! $?" >&2
+		head -10 ${mail_complete}
+	fi
+}
+
+
+######################################################################################################
+# usually called as:
+#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+function stderr_report_engine {
+	#arg1 = last exit code of compiler
+	#arg2 = "SUCCESS"/"FAILED"
+	#arg3 = Sender Mail Address (From:)
+	#arg4 = Name of the compiled Project (short, handy name)"
+	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
+	#arg6 = logfile with compiler output
+	#arg7..n = list of receiver names
+
+	# echo "reporting via default_report_engine $@"
+	local lasterr=${1}
+	local status=${2}
+	local FromMail=${3}
+	local ProjectName=${4}
+	local Revision=${5}
+	local logfile=${6}
+	shift 6
+	local receivers=$@
+	
+	echo "SIMULATE reporting ${ProjectName} rev ${Revision} compilation ${status} with code=${lasterr}"
+	if [ -r ${logfile} ]; then
+		echo "SIMULATE embedded file '${logfile}'"
+	else
+		echo "SIMULATION MISSING file '${logfile}' to embed"
+	fi
+	echo "SIMULATE sending from this sender:${FromMail}"
+	echo "SIMULATE to these receivers:${receivers}"
+	
+	read_mail_alias ${CredsDir}/*.alias
+	receivers=$(replace_mail_alias "${receivers}")
+	echo "SIMULATE to these mails:'${receivers}'"
+}
+
+
+
+######################################################################################################
+# usually called as:
+#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors}
+#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors}
+function default_report_engine {
+	#arg1 = last exit code of compiler
+	#arg2 = "SUCCESS"/"FAILED"
+	#arg3 = Sender Mail Address (From:)
+	#arg4 = Name of the compiled Project (short, handy name)"
+	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
+	#arg6 = logfile with compiler output
+	#arg7..n = list of receiver names
+
+	echo "reporting via default_report_engine $@"
+	stderr_report_engine "$@"
+}
+
+
+######################################################################################################

@@ -1,0 +1,16 @@
+# svn.check_sandbox
+
+function svn_check_sandbox {
+	# arg 1; sandbox path
+	local SandBox=${1}
+	LANG=C
+	#svn stat ${SandBox} 2> >(grep -E '^svn:') | grep '^svn:'>/dev/null
+	svn stat ${SandBox} 2> >(grep -E '^svn:') | grep '^svn:' >&2
+	if [ $? -eq 0 ]; then
+		# Not a SandBox
+		echo "NO"
+	else
+		# It is a SandBox
+		echo "YES"
+	fi
+}

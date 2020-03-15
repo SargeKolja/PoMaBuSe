@@ -1,0 +1,8 @@
+# svn.scan_release
+
+function svn_scan_release {
+	# arg 1; sandbox path
+	local SandBox=${1}
+	LANG=C
+	svn info ${SandBox} | grep '^Last.Changed.Rev:' | grep -Eo '[[:digit:]]*'
+}

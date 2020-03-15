@@ -1,0 +1,32 @@
+# svn.check_sandbox
+
+# mail="To: "; LANG=C svn log -r216:HEAD | grep -E "^r[0-9]* |" | cut -d '|' -f 2 | sort | uniq > names.txt; while read name; do mail="$mail $name"; done < names.txt; echo $mail
+
+function svn_scan_authors {
+	# arg 1: sandbox path (also works with URL + trunk/branch/tag)
+	# arg 2: previous good compiled revision
+	# arg 3: this compiled revision
+	local SandBox=${1}
+	local FromVersion=${2:-HEAD}
+	local ToVersion=${3:-HEAD}
+	local name=""
+	local mailto=""
+	local final=""
+	local author_file="last_authors.lst"
+	# debug... echo $0 $@ >&2
+	
+	LANG=C
+	rm -f ${author_file}
+	# debug... echo "svn log -r ${FromVersion}:${ToVersion} ${SandBox}" >&2
+	svn log -r ${FromVersion}:${ToVersion} ${SandBox} | grep -E "^r[0-9]* |" | cut -d '|' -f 2 | sort | uniq > ${author_file}
+	while read name; do
+		mailto="${mailto}${name},"
+	done < ${author_file}
+	# echo "File:"; cat ${author_file}
+	# echo "Variable: '${mailto}'"
+	mailto="$(echo -e "${mailto}" | tr -d '[:space:]')"
+	# echo "Variable: '${mailto}'"
+	final="${mailto%,}"
+	# echo "Variable: '${final}'"
+	echo "${final}"
+}
