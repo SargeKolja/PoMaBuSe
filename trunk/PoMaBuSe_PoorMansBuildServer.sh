@@ -103,15 +103,20 @@ while [ ! -f ${STOP_FLAG} ]; do
 							echo "+ ${TRY_THIS_REV} newer than ${LAST_TRIED_REV}, so we can give it a new try" | tee -a "${COMPILER_LOGFILE}"
 							tools_update_used_versions "${REVISION_FILE}" "${LAST_GOOD_REV}" "${LAST_TRIED_REV}" 2>&1 | tee -a "${COMPILER_LOGFILE}"
 							LastEditors=$(${SCAN_AUTHORS} "${SANDBOX}" "${LAST_GOOD_REV}" "${TRY_THIS_REV}")
+							echo -e "> LastEditors have been:\n\t${LastEditors}" | tee -a "${COMPILER_LOGFILE}"
 							# compile ...
+							echo "-----------------------------------------" | tee -a "${COMPILER_LOGFILE}"
 							PoMaBuSeDir="${PWD}"
 							cd "${SANDBOX}"
-							echo -e "calling compiler:\n\t${COMPILE}" | tee -a "${COMPILER_LOGFILE}"
-							if ${COMPILE} >> "${COMPILER_LOGFILE}" 2>&1; then
+							echo "${PWD}" | tee -a "${COMPILER_LOGFILE}"
+							echo -e "# calling compiler:\n\t${COMPILE}" | tee -a "${COMPILER_LOGFILE}"
+							${COMPILE} 2>&1 | tee -a "${COMPILER_LOGFILE}"
+							Err=$?
+							if [ ${Err} -eq 0 ]; then
 								cd ${PoMaBuSeDir}
 								echo "+ compilation of version ${TRY_THIS_REV} was okay" | tee -a "${COMPILER_LOGFILE}"
 								# todo: parameter or switch to decide if POSITIVE reports shall be sent (or sent after recovered failure to failure recipients?)
-								${REPORT_ENGINE} $? "SUCCESS" "${FromMail}" "${ProjectName}" "${TRY_THIS_REV}" "${COMPILER_LOGFILE}"  ${LastEditors}
+								${REPORT_ENGINE} ${Err} "SUCCESS" "${FromMail}" "${ProjectName}" "${TRY_THIS_REV}" "${COMPILER_LOGFILE}"  ${LastEditors}
 								# setting both revisions equal on success:
 								tools_update_used_versions "${REVISION_FILE}" "${TRY_THIS_REV}" "${TRY_THIS_REV}" 2>&1 | tee -a "${COMPILER_LOGFILE}"
 							else
@@ -119,7 +124,7 @@ while [ ! -f ${STOP_FLAG} ]; do
 								echo "--- Changes since last successful compilation:" | tee -a "${COMPILER_LOGFILE}"
 								${GET_LAST_CHANGES} "${SANDBOX}" "${COMPILER_LOGFILE}" "${LAST_GOOD_REV}" "${TRY_THIS_REV}"
 								echo "reporting ERR to ${REPORT_ENGINE}" | tee -a "${COMPILER_LOGFILE}"
-								${REPORT_ENGINE} $? "FAILED" "${FromMail}" "${ProjectName}" "${TRY_THIS_REV}" "${COMPILER_LOGFILE}"  ${LastEditors}
+								${REPORT_ENGINE} ${Err} "FAILED" "${FromMail}" "${ProjectName}" "${TRY_THIS_REV}" "${COMPILER_LOGFILE}"  ${LastEditors}
 								echo "compilation FAILED"
 							fi
 						else
