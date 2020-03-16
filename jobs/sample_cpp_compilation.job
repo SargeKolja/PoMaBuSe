@@ -1,9 +1,9 @@
 # best view with <TAB SIZE 4>
 #
-ProjectName="Sample-C"										#	user friendly, human readable project name (for logging and mails)
+ProjectName="Sample-C++"									#	user friendly, human readable project name (for logging and mails)
 VSCNAME=svn													#	version checkout tool name and functions prefix. simple word (typical: "svn" or "rcs" or ...)
-URL="http://svn.code.sf.net/p/pomabuse/svn/trunk/samples.c"		#	remote repository address (i.e. svn+ssh://ourserver.local/repositories/coolprojects/thisone
-SANDBOX=~/auto_sandbox/samples_c							#	local sandbox path (i.e. ~/sandboxes)
+URL="http://svn.code.sf.net/p/pomabuse/svn/trunk/samples.cpp"	#	remote repository address (i.e. svn+ssh://ourserver.local/repositories/coolprojects/thisone
+SANDBOX=~/auto_sandbox/samples_cpp							#	local sandbox path (i.e. ~/sandboxes)
 REVISION=HEAD												#	specifier for release version number (HEAD)
 
 # --- this block can get predefined somewhere else
@@ -18,6 +18,4 @@ VCS_UPDATE="${VCSTOOL} update -r ${REVISION}"				# ${SANDBOX} is automatically a
 REPORT_ENGINE=sendmail_report_engine						# function to report from tools*.bash_inc, i.e. mail sending DO NOT USE QUOTES on function names!
 # --- this block 
 
-COMPILE="${COMPILE_C} -Os helloworld.c -o helloworld"		# direct command or reference to another cfg file value
-
-WillNotWork="gcc -Os helloworld.c -o helloworld && ./helloworld"	# can you tell me, why not?
+COMPILE="${COMPILE_CPP} *.cpp -o ${ProjectName}"			# direct command or reference to another cfg file value
