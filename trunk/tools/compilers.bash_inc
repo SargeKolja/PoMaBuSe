@@ -11,11 +11,12 @@
 #         use double qoutes if you're using ${} or $() patterns inside ...
 
 COMPILE_BASH=bash
-COMPILE_MAKE="make ${MAKE_ON_X_CORES} -f"
-COMPILE_QMAKE=qmake
+ COMPILE_FAKEGOOD=/bin/true 
+ COMPILE_FAKEBAD= /bin/false 
+COMPILE_C=gcc								#	this does not have a real productive use case, but for testing it's fine
+COMPILE_CPP=g++								#	same here
+COMPILE_MAKE="make ${MAKE_ON_X_CORES} -f"	#	THIS ONE is your friend
+COMPILE_QMAKE=qmake							#	AND THIS
 COMPILE_QMAKE4='qmake -qt=4'
 COMPILE_QMAKE5='qmake -qt=5'
 
- COMPILE_FAKEGOOD=/bin/true 
-
- COMPILE_FAKEBAD= /bin/false 
