@@ -2,7 +2,7 @@
 #
 ProjectName="Sample-C"										#	user friendly, human readable project name (for logging and mails)
 VSCNAME=svn													#	version checkout tool name and functions prefix. simple word (typical: "svn" or "rcs" or ...)
-URL="http://svn.code.sf.net/p/pomabuse/svn/trunk/samples.c"		#	remote repository address (i.e. svn+ssh://ourserver.local/repositories/coolprojects/thisone
+URL="http://svn.code.sf.net/p/pomabuse/svn/trunk/sample_projects/sample_C"	#	remote repository address (i.e. svn+ssh://ourserver.local/repositories/coolprojects/thisone
 SANDBOX=~/auto_sandbox/samples_c							#	local sandbox path (i.e. ~/sandboxes)
 REVISION=HEAD												#	specifier for release version number (HEAD)
 
