@@ -52,13 +52,33 @@ if [ -z "$(ls -1 ${JobsDir}/*.job 2>/dev/null)" ]; then
 fi
 
 declare -i LAST_GOOD_REV=0
-declare -i LAST_TRIED_REV=0
+declare -i LAST_TRIED_REV=-1
+
+
+function report_error {
+	# arg 1: error code
+	# arg 2: Job or Project name
+	# arg 3..n: additional text
+	local ErrorCode=${1}
+	local ProjectName=${3}
+	shift 2
+	local Information="${@}"
+
+	local Logfile=~/pomabuse_internal.log
+	echo "++++++++++ INTERNAL ISSUE ++++++++++" > "${Logfile}"
+	if [ -r "${COMPILER_LOGFILE}" ]; then cat "${COMPILER_LOGFILE}" >> "${Logfile}"; fi
+	echo "++++++++++ INTERNAL ISSUE ++++++++++" >> "${Logfile}"
+	echo "INTERNAL_FAILURE: ${Information}" | tee -a "${Logfile}" >&2
+	
+	default_report_engine ${ErrorCode} "INTERNAL_FAILURE" "${ToAdminMail}" "${ProjectName}" "0" "${Logfile}" "${ToAdminMail}"
+}
 
 
 while [ ! -f ${STOP_FLAG} ]; do
 	echo "* Performing Jobs from ${JobsDir}/ ..."
 	PoMaBuSeDir="${PWD}" # make it avail for jobs to access this scripts, f.i. to call automatic tests or demos
 	for job in $( ls -1 ${JobsDir}/*.job); do
+		echo -e "\n===================[ Job ${job} starting.. ]=================="
 		REVISION_FILE="./${job##*/}.rev"
 		COMPILER_LOGFILE="$PWD/${job##*/}.log"
 		echo "=>Job is ${job}" | tee "${COMPILER_LOGFILE}"
@@ -72,13 +92,15 @@ while [ ! -f ${STOP_FLAG} ]; do
 		fi
 		# dontwork: eval $(sed -r '/[^=]+=[^=]+/!d;s/\s+=\s/=/g' ${job})
 		CFG_CONTENT=$(cat ${job} | sed -r '/[^=]+=[^=]+/!d' | sed -r 's/\s+=\s/=/g')
+		# --- debug -- echo -e "\n\n=====\nCFG_CONTENT=${CFG_CONTENT}\n=====\nCOMPILE_CPP=${COMPILE_CPP}\n\n"
 		eval "$CFG_CONTENT"
 		# -----
 		tools_dump_jobdetails "${job}" | tee -a "${COMPILER_LOGFILE}"
 		if [ "OKAY" != "$(CHECK_${REPORT_ENGINE})" ]; then
 			echo "missing report engine, can't report this" | tee -a "${COMPILER_LOGFILE}"
 			CHECK_${REPORT_ENGINE} 2>&1  | tee -a "${COMPILER_LOGFILE}"
-			stderr_report_engine $? "FAILED" "${FromMail}" "${ProjectName}" "1" "${COMPILER_LOGFILE}" "${FromMail}"
+			# stderr_report_engine $? "FAILED" "${FromMail}" "${ProjectName}" "1" "${COMPILER_LOGFILE}" "${FromMail}"
+			report_error $? "${ProjectName}" "missing report engine ${REPORT_ENGINE}"
 		fi
 		echo "-----------------------------------------" | tee -a "${COMPILER_LOGFILE}"
 		echo "checking if ${SANDBOX} is halfway working ..."
@@ -137,14 +159,19 @@ while [ ! -f ${STOP_FLAG} ]; do
 					echo "- is still unchanged, nothing to be done"
 				fi
 			else
-				echo "! FAILED, not a ${VSCNAME} sandbox in ${SANDBOX}"
-				exit 4
+				# echo "! FAILED, not a ${VSCNAME} sandbox in ${SANDBOX}"
+				report_error $? "${ProjectName}" "! FAILED, not a ${VSCNAME} sandbox in ${SANDBOX}"
+				mv "${job}" ${job}.broken  #to prevent stop of whole builder and to prevent endless mail loops
+				# exit 4
 			fi
 		else
-			echo "! FAILED, unreadable sandbox ${SANDBOX}"
-			exit 5
+			# echo "! FAILED, unreadable sandbox ${SANDBOX}"
+			# exit 5
+			report_error $? "${ProjectName}" "! FAILED, unreadable sandbox ${SANDBOX}"
+			mv "${job}" ${job}.broken  #to prevent stop of whole builder and to prevent endless mail loops
+			# exit 5
 		fi
-		echo "========================================="
+		echo -e "===================[ Job ${job} done, next ]==================\n\n"
 	done
 
 	echo "~ all jobs done, wait some time ..."
