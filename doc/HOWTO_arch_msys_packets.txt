@@ -1,0 +1,25 @@
+packages and tools needed in arch-ish distros and MSYS2 (this is pacman+bash+mingw under Windows):
+	bash		#	the program is entirely written in BASH, not DASH, but dash might alos work (pl. open a ticket, if not)
+	coreutils	#	head, tail, cp, mv, ..
+	findutils	#	xargs
+	cut 		#	bash internals, I believe
+	grep		#	who could live without?
+	sleep 		#	bash internal, I believe
+	svn			#	to fetch the sources the PO Mabuse shall compile. as of 2020/Mar/12, this is the only VCS we support, but plans are for git
+	openssh		#	service and admintration the build clients // or use Virtual machines with terminal shells
+	editor		#	any, i.e. nano, joe, emacs, vim or geany, whatever ...
+	build-essential	# or one or more of the following:
+	gcc			#	or whatever compiler you prefer
+	g++			#	or whatever compiler you prefer
+	make		#	most likely
+	qt5-default	qttools5-dev-tools	# very likely
+	qt4-default	qt4-dev-tools		# or the older one
+
+	sendmail alternative on arch and on MSYS2 is: "mSMTP" or Nullmailer, I prefer mSMTP here since years
+	for mSMTP on MSYS2:
+		pacman -S mingw-w64-i686-msmtp mingw-w64-i686-libsecret
+		editor ${ALLUSERSPROFILE}/msmtprc.txt	# system/root mails
+		editor ~/msmtprc.txt  					# user mails
+
+	not yet tested but should work: 
+		s-nail (this is POSIX mailx for Arch/Manjaro, also avail in apt for debians/'buntus) 

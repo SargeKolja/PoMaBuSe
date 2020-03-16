@@ -1,0 +1,168 @@
+Welcome to "Poor Mans Build Server"
+	aka PoMaBuSe
+	aka PO Mabuse
+
+1 - Intention and what it does
+==============================
+
+This program is dedicated to a friend of mine, Martin Djernæs, a brilliant engineer from Denmark.
+In 1997 we used a simple toolchain for a gcc crosscompiler (SH-1), in which we transferred our 
+IDEs code via RCS and SAMBA and then started the compilation on the so called "build system" 
+using a flag file.
+We got the reports (stdout + stderr) of the remote compiler back into our IDEs via SAMBA.
+
+Today I have the task of compiling and linking programs in parallel on several Linux flavors. 
+Basically, it's the same job like in the 90th. But it should be a little more modern today. 
+So RCS was replaced SVN and / or GIT, triggering replaced by sleep / poll and finally 
+the protocol-via-Samba pulling becomes Email and / or Telegram.
+
+So in rough view its the following:
+
+	1) you define a config/job file, which contains details how to check out and compile your program.
+	2) you drop the job file to the PO Mabuse's ./jobs folder
+	3) you and your team write the program code and commit it to SVN (GIT avail soon)
+	4) go to the coffee maker
+	5) listen to 'pling, pling' on your smart phone email account (TELEGRAM avail soon)
+	6) receive a SUCCESS or FAILED mail
+	7) mail contains whole compiler output, so you can fix the code or fix missing preconditions 
+	   (depending packages) on the build server.
+	8) some of your team again commit changes to SVN
+	9) You will now hear "pling, pling" on the mail accounts or SIGNAL messengers of all colleagues, 
+	   who are now being confirmed that the source code has been translatable again since the last error. 
+	9b) Or from all colleagues who have added new bugs since the last successful compilation.
+
+That's it!
+
+
+2 - Install and 1st run
+=======================
+
+on any Linux or MSYS2 (maybe also on "git bash for windows"?), you already installed
+build-essentials and svn, as well as the other tools named in the HOWTO_*.txt files.
+Start with just one Linux client, we can add more virtual or real machines any time.
+
+
+Step A:
+~~~~~~~
+	svn checkout svn://svn.code.sf.net/p/pomabuse/svn/trunk/ ~/pomabuse
+
+resulting in more or less this structure:
+	/home/john.doe/pomabuse
+	├── config
+	│   └── pomabuse.cfg
+	├── creds
+	├── doc
+	│   ├── getting_started.txt                    <-- you are reading this right now
+	│   └── HOWTO_*.txt
+	├── jobs
+	│   └── sample*.job
+	├── PoMaBuSe_PoorMansBuildServer.sh            <-- the PO Mabuse main program
+	├── samples
+	│   ├── samples_c
+	│   ├── samples_cpp
+	│   └── samples_qmake
+	├── tests
+	│   └── *.bash
+	└── tools	                                   <-- kind of bash libraries for main program
+		├── compilers.bash_inc	                   <-- predefined compilers, pls. adjust
+		├── private_functions.bash_inc
+		├── svn.*.bash_inc                         <-- SVN related functions
+		├── git.*.bash_inc                         <-- GIT related functions
+		└── *.bash_inc
+	
+Step B:
+~~~~~~~
+	Basic setup
+	Edit and adjust pomabuse.cfg, mostly user names or email addresses, it's not much.
+	if you take local user aliases, please ensure they are mapped to real emails in /etc/aliases.
+
+Step C:
+~~~~~~~
+	Configure for Comfort
+	Mails. You can skip the sendmail/msmtp part for now and do it later. Just open all *.job files and 
+	replace "REPORT_ENGINE=sendmail_report_engine"  by	"REPORT_ENGINE=stderr_report_engine"
+	Or, if you like to have the mail system up and running from start, you should be able to call
+		which sendmail
+		MAILADDRESS="john.doe@example.com"
+		echo -e "From: ${MAILADDRESS}\nTo: ${MAILADDRESS}\nSubject: testmail\n\nsendmail is ok.\n" | sendmail -f${MAILADDRESS} -d -- ${MAILADDRESS} 
+	... otherwise you'll get warnings about failed mail sending, but it takes no harm.
+
+Step D:
+~~~~~~~
+	Destination Directory.
+	we have predefined jobs in ./jobs. 
+	In this step, you should only take a look into and validate, if SANDBOX= is okay. (Should work always).
+	
+Step E:
+~~~~~~~
+	EXECUTE.
+	Open a terminal shell, go into the ~/pomabuse directory and invoke
+		./PoMaBuSe_PoorMansBuildServer.sh
+	watch it working.
+
+Step F:
+~~~~~~~
+	Finished, Fun.
+	You should have seen how all sample jobs got compiled.
+	In case you have sendmail, you should have received emails already.
+	Broken jobs got renamed to *.job.broken.
+	Good jobs are still active. PO Mabuse will repeat the SVN checking of all active jobs in 15 min 
+	(or whatever pomabuse.cfg::SleepBetweenScans is set to).
+
+Step G:
+~~~~~~~
+	Grow.
+	Copy the job sample that is close to your needs. Delete or rename all others.
+	The PO Mabuse is only looking for *.job, so any other extension works as deactivation.
+	
+	Change at least
+		ProjectName=
+		URL=
+		SANDBOX=
+		COMPILE=
+	to reflect your program. A restart is not required, als long as only jobs are edited.
+	
+
+
+3 - on security
+===============
+
+Dr. Mabuse is a German novel figure. He _is_ evil and extremely selfish. If his goals are your goals,
+you and he can become partners. If goals change, you're F***ed up.
+
+Same here with PO Mabuse: If you let a Petty Officer spend time in the harbor district, it is likely 
+that he will do dirty things and someone will persuade him to do dark business. Don't let him down!
+
+YOU'VE BEEN WARNED! 
+
+A job and most config files are more or less bash scripts. PO Mabuse is executing it with the same 
+access rights, you started PO Mabuse with.
+You shall not allow any untrusted person to drop job files into ./jobs or ./config folder.
+You shall not allow the PO Mabuse user to run with root or sudo credentials.
+If you think, it's a goo idea to put
+	./configure
+	make
+	sudo make install
+into a job, it's your own responsibility. I would not do such outside of my small teams world and office.
+Instead of giving all developers CIFS/SAMBA access to ./jobs or ./config, it would be better to give only
+trustworthy developers a restricted ssh/putty access and to start PO Mabuse with an own account and mail 
+address.
+
+
+4 - daily operation
+
+To force a compilation, search the job's *.job.rev file in PO Mabuse main directory and delete it.
+
+To force reloading ./config and ./tools, ^C the programm and restart it.
+
+To control it via signals, drop me a patch. I know, its common practice in bash, but I rarely used it.
+
+To control it via pipe from SVN hook, drop me the hook and the patch.
+
+To send TELEGRAM messages from MSYS2, help fixing telegram.ac in https://github.com/vysheng/tg.git
+
+More details to come ...
+
+I propose maintaining a FAQ on sourceforge, so this chapter gets filled by time.
+
+Have fun!
