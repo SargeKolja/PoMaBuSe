@@ -18,4 +18,6 @@ VCS_UPDATE="${VCSTOOL} update -r ${REVISION}"				# ${SANDBOX} is automatically a
 REPORT_ENGINE=sendmail_report_engine						# function to report from tools*.bash_inc, i.e. mail sending DO NOT USE QUOTES on function names!
 # --- this block 
 
-COMPILE="gcc -Os helloworld.c -o helloworld && strip helloworld"	# direct command or reference to another cfg file value
+COMPILE="gcc -Os helloworld.c -o helloworld"				# direct command or reference to another cfg file value
+
+WillNotWork="gcc -Os helloworld.c -o helloworld && ./helloworld"	# can you tell me, why not?
