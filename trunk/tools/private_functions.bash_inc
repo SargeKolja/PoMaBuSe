@@ -39,9 +39,9 @@ declare -A MailOf
 function read_mail_alias {
 	# arg1 ... n : names of mail alias lists
 	# no alias is okay, then we have no aliases and names are adresses
-	# echo "read_mail_alias '$@'"
-	for aliasfile in "$@"; do
-		if [ -r "${1}" ]; then
+	# echo "read_mail_alias '/etc/aliases $@'"
+	for aliasfile in /etc/aliases $@; do
+		if [ -r "${aliasfile}" ]; then
 			# echo "--- reading eMail alias' from ${aliasfile}"
 			while IFS="=#:" read -r key value comment; do
 				key=$(trim ${key})
@@ -61,7 +61,7 @@ function read_mail_alias {
 ######################################################################################################
 function replace_mail_alias {
 	# arg 1...n : list of names which might be aliased
-	 echo "replace_mail_alias '$@'" >&2
+	# echo "replace_mail_alias '$@'" >&2
 	local replaced=""
 	local liste=""
 	local result=""
@@ -71,7 +71,7 @@ function replace_mail_alias {
 		replaced=${MailOf[${user}]}
 		# echo "replaced ${user} by ${replaced}" >&2
 		if [ -z "${replaced}" ]; then replaced=${user}; fi
-		# echo "replaced ${user} by ${replaced}" >&2
+		 echo "replaced ${user} by ${replaced}" >&2
 		liste="${liste}${replaced}\n"
 		liste="$(echo -n "${liste}" | tr ',' '\n')"
 	done
@@ -163,7 +163,7 @@ function sendmail_report_engine {
 	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
 	#arg6 = logfile with compiler output
 	#arg7..n = list of receiver names
-	echo "reporting via sendmail_report_engine $@"
+	echo -e "> reporting via:\n  sendmail_report_engine $@"
 	local lasterr=${1}
 	local status=${2}
 	local FromMail=${3}
@@ -175,11 +175,27 @@ function sendmail_report_engine {
 	
 	mail_complete=$(get_tempname).mail.txt
 
+	cat <<-HEREDOC
+		> reporting with:
+		: lasterr=${lasterr}
+		: status=${status}
+		: FromMail=${FromMail}
+		: ProjectName=${ProjectName}
+		: Revision=${Revision}
+		: logfile=${logfile}
+		: receivers=${receivers}
+		: mail_complete=${mail_complete}
+	HEREDOC
+
 	read_mail_alias ${CredsDir}/*.alias
 	receivers=$(replace_mail_alias "${receivers}")
-	echo "to these mails:'${receivers}'"
-	
 	FromMail=$(replace_mail_alias "${FromMail}")
+	cat <<-HEREDOC
+		> resolved mails:
+		: FromMail=${FromMail}
+		: receivers=${receivers}
+
+	HEREDOC
 	
 	# --- todo: make a HEREDOC with placeholders? ---
 	echo -en "From: ${FromMail}\n"                                                      > ${mail_complete}
@@ -200,9 +216,9 @@ function sendmail_report_engine {
 	echo -en "---- logfile ends here. ----------------------------------\n"            >> "${mail_complete}"
 	echo -en "\n<EOT>\n\n"                                                             >> "${mail_complete}"
 	
-	echo "invoking sendmail for ${receivers} ..."
-	# cat ${mail_complete} | sendmail -d -- ${receivers}
-	cat ${mail_complete} | sendmail ${receivers}
+	echo "invoking sendmail for email from ${FromMail} to ${receivers} ..."
+	# cat ${mail_complete} | sendmail -f${FromMail} -d -- ${receivers}
+	cat ${mail_complete} | sendmail -f${FromMail} -- ${receivers}
 	if [ $? -eq 0 ]; then
 		head -2 ${mail_complete}
 		rm -f ${mail_complete}
