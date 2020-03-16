@@ -18,7 +18,7 @@ function svn_scan_authors {
 	LANG=C
 	rm -f ${author_file}
 	# debug... echo "svn log -r ${FromVersion}:${ToVersion} ${SandBox}" >&2
-	svn log -r ${FromVersion}:${ToVersion} ${SandBox} | grep -E "^r[0-9]* |" | cut -d '|' -f 2 | sort | uniq > ${author_file}
+	svn log -r ${FromVersion}:${ToVersion} ${SandBox} | grep -E '^r[0-9][0-9]* \|' | cut -d '|' -f 2 | sort | uniq > ${author_file}
 	while read name; do
 		mailto="${mailto}${name},"
 	done < ${author_file}
