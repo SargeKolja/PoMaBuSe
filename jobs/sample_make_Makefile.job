@@ -1,0 +1,21 @@
+# best view with <TAB SIZE 4>
+#
+ProjectName="Sample_Make"									#	user friendly, human readable project name (for logging and mails)
+VSCNAME=svn													#	version checkout tool name and functions prefix. simple word (typical: "svn" or "rcs" or ...)
+URL="http://svn.code.sf.net/p/pomabuse/svn/trunk/sample_projects/sample_make"	#	remote repository address (i.e. svn+ssh://ourserver.local/repositories/coolprojects/thisone
+SANDBOX=~/auto_sandbox/sample_with_MAKE						#	local sandbox path (i.e. ~/sandboxes)
+REVISION=HEAD												#	specifier for release version number (HEAD)
+
+# --- this block can get predefined somewhere else
+VCSTOOL=$(which ${VSCNAME})									#	version checkout tool, executeable (typical: svn or /usr/bin/svn)
+CHECK_SANDBOX=${VSCNAME}_check_sandbox						#	name of the function which checks, if the sandbox is more or less a vcs controlled sandbox
+IF_CHANGED=${VSCNAME}_scan_changes							#	name of the Changes-Scanner (a bash include file ./Tools/*.bash_inc , defining how to see if server has newer version)
+GET_RELEASEID=${VSCNAME}_scan_release						#	name of the Release-Scanner (a bash include file in Tools, defining how to get the specific release version number)
+SCAN_AUTHORS=${VSCNAME}_scan_authors						#	name of the changes authors collector
+GET_LAST_CHANGES=${VSCNAME}_append_log_to_file				#	name of the changelog collector
+VCS_CHECKOUT="${VCSTOOL} checkout -r ${REVISION} ${URL}${VCSTRUNK}"	#  ${SANDBOX} is automatically appended, how to get fresh
+VCS_UPDATE="${VCSTOOL} update -r ${REVISION}"				# ${SANDBOX} is automatically appended, how to get updated
+REPORT_ENGINE=sendmail_report_engine						# function to report from tools*.bash_inc, i.e. mail sending DO NOT USE QUOTES on function names!
+# --- this block 
+
+COMPILE="${COMPILE_MAKE} Makefile"							# direct command or reference to another cfg file value
