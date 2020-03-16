@@ -1,6 +1,6 @@
 # best view with <TAB SIZE 4>
 #
-ProjectName="Sample_Make"									#	user friendly, human readable project name (for logging and mails)
+ProjectName="QT-Sample_QMake"								#	user friendly, human readable project name (for logging and mails)
 VSCNAME=svn													#	version checkout tool name and functions prefix. simple word (typical: "svn" or "rcs" or ...)
 URL="http://svn.code.sf.net/p/pomabuse/svn/trunk/sample_projects/sample_qmake"	#	remote repository address (i.e. svn+ssh://ourserver.local/repositories/coolprojects/thisone
 SANDBOX=~/auto_sandbox/sample_with_QT_qmake						#	local sandbox path (i.e. ~/sandboxes)
