@@ -196,37 +196,40 @@ function sendmail_report_engine {
 		: receivers=${receivers}
 
 	HEREDOC
-	
-	# --- todo: make a HEREDOC with placeholders? ---
-	echo -en "From: ${FromMail}\n"                                                      > ${mail_complete}
-	#-nn- for recipient in ${receivers//,/$IFS}; do
-	#-nn- 	echo -en "To: ${recipient}\n"                                              >> ${mail_complete}
-	#-nn- done
-	echo -en "To: ${receivers}\n"                                                      >> ${mail_complete}
-	echo -en "MIME-Version: 1.0\n"                                                     >> ${mail_complete}
-	echo -en "Content-Type: text/plain; charset=utf-8\n"                               >> ${mail_complete}
-	echo -en "Content-Transfer-Encoding: 8bit\n"                                       >> ${mail_complete}
-	echo -en "Subject: ${status} compiled of ${ProjectName} rev ${Revision}\n"         >> ${mail_complete}
-	echo -en "\n"                                                                      >> ${mail_complete}
 
-	echo -en "reporting ${ProjectName} rev ${Revision} has compiled with ${status}, code=${lasterr}\n" >> "${mail_complete}"
-	echo -en "Please refer the embedded logfile '${logfile}'\n"                        >> "${mail_complete}"
-	echo -en "---- logfile starts here: --------------------------------\n"            >> "${mail_complete}"
-	cat "${logfile}"                                                                   >> "${mail_complete}"
-	echo -en "---- logfile ends here. ----------------------------------\n"            >> "${mail_complete}"
-	echo -en "\n<EOT>\n\n"                                                             >> "${mail_complete}"
-	
-	echo "invoking sendmail for email from ${FromMail} to ${receivers} ..."
-	# cat ${mail_complete} | sendmail -f${FromMail} -d -- ${receivers}
-	cat ${mail_complete} | sendmail -f${FromMail} -- ${receivers}
-	if [ $? -eq 0 ]; then
-		head -2 ${mail_complete}
-		rm -f ${mail_complete}
-		echo "DONE."
-	else
-		echo "FAILED! $?" >&2
-		head -10 ${mail_complete}
-	fi
+	for Sender in ${FromMail//,/$IFS}; do
+		echo ". looping for all senders: ${Sender}"
+		# --- todo: make a HEREDOC with placeholders? ---
+		echo -en "From: ${Sender}\n"                                                      > ${mail_complete}
+		#-nn- for recipient in ${receivers//,/$IFS}; do
+		#-nn- 	echo -en "To: ${recipient}\n"                                              >> ${mail_complete}
+		#-nn- done
+		echo -en "To: ${receivers}\n"                                                      >> ${mail_complete}
+		echo -en "MIME-Version: 1.0\n"                                                     >> ${mail_complete}
+		echo -en "Content-Type: text/plain; charset=utf-8\n"                               >> ${mail_complete}
+		echo -en "Content-Transfer-Encoding: 8bit\n"                                       >> ${mail_complete}
+		echo -en "Subject: ${status} compiled of ${ProjectName} rev ${Revision}\n"         >> ${mail_complete}
+		echo -en "\n"                                                                      >> ${mail_complete}
+
+		echo -en "reporting ${ProjectName} rev ${Revision} has compiled with ${status}, code=${lasterr}\n" >> "${mail_complete}"
+		echo -en "Please refer the embedded logfile '${logfile}'\n"                        >> "${mail_complete}"
+		echo -en "---- logfile starts here: --------------------------------\n"            >> "${mail_complete}"
+		cat "${logfile}"                                                                   >> "${mail_complete}"
+		echo -en "---- logfile ends here. ----------------------------------\n"            >> "${mail_complete}"
+		echo -en "\n<EOT>\n\n"                                                             >> "${mail_complete}"
+		
+		echo "invoking sendmail for email from ${Sender} to ${receivers} ..."
+		# cat ${mail_complete} | sendmail -f${Sender} -d -- ${receivers}
+		cat ${mail_complete} | sendmail -f${Sender} -- ${receivers}
+		if [ $? -eq 0 ]; then
+			head -2 ${mail_complete}
+			rm -f ${mail_complete}
+			echo "DONE."
+		else
+			echo "FAILED! $?" >&2
+			head -10 ${mail_complete}
+		fi
+	done # for Sender in ${FromMail//,/$IFS}; do
 }
 
 
