@@ -19,4 +19,4 @@ REPORT_ENGINE=sendmail_report_engine						# function to report from tools*.bash_
 # --- this block 
 
 # set whole compile command chain in single quotes, evaluation is postponed to eval ${COMPILE} in main Script.
-COMPILE='MasterPro=Master;MainPro=Sub1;qmake ${MasterPro}.pro && make clean & cd ${MainPro} && qmake ${MainPro}.pro && lupdate ${MainPro}.pro && lrelease ${MainPro}.pro && cd - && make'									# direct command or reference to another cfg file value
+COMPILE='MasterPro=Master;MainPro=MainApp;qmake ${MasterPro}.pro && make clean && cd ${MainPro} && qmake ${MainPro}.pro && lupdate ${MainPro}.pro && lrelease ${MainPro}.pro && cd - && make'									# direct command or reference to another cfg file value
