@@ -3,7 +3,7 @@
 #include <QTranslator>
 #include <QDebug>
 
-#include <Sub1.hpp>
+#include <MainApp.hpp>
 #include <Sub2.h>
 #include <Sub3.hpp>
 
