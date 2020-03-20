@@ -211,12 +211,14 @@ function sendmail_report_engine {
 		echo -en "Subject: ${status} compiled of ${ProjectName} rev ${Revision} on $(hostname)\n"	>> ${mail_complete}
 		echo -en "\n"                                                                      >> ${mail_complete}
 
-		echo -en "reporting ${ProjectName} rev ${Revision} has compiled with ${status}, code=${lasterr}\n" >> "${mail_complete}"
-		echo -en "Build Agent was computer '$(hostname)'\n"                   			   >> "${mail_complete}"
-		echo -en "Please refer the embedded logfile '${logfile}'\n"                        >> "${mail_complete}"
+		echo -en "I report that ${ProjectName} rev ${Revision} has compiled with ${status}, code=${lasterr}\n" >> "${mail_complete}"
+		echo -en "Time of reporting this was $(date --rfc-email)\n"               		   >> "${mail_complete}"
+		echo -en "Build Agent was computer '$(hostname)'\n\n"                  			   >> "${mail_complete}"
+		echo -en "Please refer to the embedded logfile below '${logfile}':\n"              >> "${mail_complete}"
 		echo -en "---- logfile starts here: --------------------------------\n"            >> "${mail_complete}"
 		cat "${logfile}"                                                                   >> "${mail_complete}"
 		echo -en "---- logfile ends here. ----------------------------------\n"            >> "${mail_complete}"
+		echo -en "\nThis report was provided by PO Mabuse, https://sourceforge.net/p/pomabuse/svn/"   >> "${mail_complete}"
 		echo -en "\n<EOT>\n\n"                                                             >> "${mail_complete}"
 		
 		echo "invoking sendmail for email from ${Sender} to ${receivers} ..."
