@@ -133,7 +133,7 @@ while [ ! -f ${STOP_FLAG} ]; do
 							echo "${PWD}" | tee -a "${COMPILER_LOGFILE}"
 							echo -e "# calling compiler:\n\t${COMPILE}" | tee -a "${COMPILER_LOGFILE}"
 							date --iso-8601=seconds | tee -a "${COMPILER_LOGFILE}"
-							${COMPILE} 2>&1 | tee -a "${COMPILER_LOGFILE}"
+							( eval ${COMPILE} ) 2>&1 | tee -a "${COMPILER_LOGFILE}"
 							Err=$?
 							date --iso-8601=seconds | tee -a "${COMPILER_LOGFILE}"
 							if [ ${Err} -eq 0 ]; then
