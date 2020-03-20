@@ -81,16 +81,17 @@ while [ ! -f ${STOP_FLAG} ]; do
 		echo -e "\n===================[ Job ${job} starting.. ]=================="
 		REVISION_FILE="./${job##*/}.rev"
 		COMPILER_LOGFILE="$PWD/${job##*/}.log"
-		echo "=>Job is ${job}" | tee "${COMPILER_LOGFILE}"
+		echo "=>Job '${job}' started $(date --rfc-email)" | tee "${COMPILER_LOGFILE}"
+		LAST_GOOD_REV=0
+		LAST_TRIED_REV=-1
 		if [ ! -r "${REVISION_FILE}" ]; then
 			echo "- 1st time init ${REVISION_FILE} to LAST_GOOD_REV=0 LAST_TRIED_REV=-1" | tee -a "${COMPILER_LOGFILE}"
-			tools_update_used_versions "${REVISION_FILE}" 0 -1 2>&1 | tee -a "${COMPILER_LOGFILE}"  # setting last tried below last good forced 1st time compilation
+			tools_update_used_versions "${REVISION_FILE}" ${LAST_GOOD_REV} ${LAST_TRIED_REV} -1 2>&1 | tee -a "${COMPILER_LOGFILE}"  # setting last tried below last good forced 1st time compilation
 		fi
 		if [ -r "${REVISION_FILE}" ]; then
 			source "${REVISION_FILE}"
 			echo "LAST_GOOD_REV=${LAST_GOOD_REV}, LAST_TRIED_REV=${LAST_TRIED_REV}" | tee -a "${COMPILER_LOGFILE}"
 		fi
-		# dontwork: eval $(sed -r '/[^=]+=[^=]+/!d;s/\s+=\s/=/g' ${job})
 		CFG_CONTENT=$(cat ${job} | sed -r '/[^=]+=[^=]+/!d' | sed -r 's/\s+=\s/=/g')
 		# --- debug -- echo -e "\n\n=====\nCFG_CONTENT=${CFG_CONTENT}\n=====\nCOMPILE_CPP=${COMPILE_CPP}\n\n"
 		eval "$CFG_CONTENT"
@@ -132,10 +133,10 @@ while [ ! -f ${STOP_FLAG} ]; do
 							cd "${SANDBOX}"
 							echo "${PWD}" | tee -a "${COMPILER_LOGFILE}"
 							echo -e "# calling compiler:\n\t${COMPILE}" | tee -a "${COMPILER_LOGFILE}"
-							date --iso-8601=seconds | tee -a "${COMPILER_LOGFILE}"
+							date --iso-8601=ns | tee -a "${COMPILER_LOGFILE}"
 							( eval ${COMPILE} ) 2>&1 | tee -a "${COMPILER_LOGFILE}"
 							Err=$?
-							date --iso-8601=seconds | tee -a "${COMPILER_LOGFILE}"
+							date --iso-8601=ns | tee -a "${COMPILER_LOGFILE}"
 							if [ ${Err} -eq 0 ]; then
 								cd ${PoMaBuSeDir}
 								echo "+ compilation of version ${TRY_THIS_REV} was okay" | tee -a "${COMPILER_LOGFILE}"
