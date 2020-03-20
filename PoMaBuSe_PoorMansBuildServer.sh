@@ -54,6 +54,8 @@ fi
 declare -i LAST_GOOD_REV=0
 declare -i LAST_TRIED_REV=-1
 
+Logfile=~/pomabuse_internal.log
+echo "Start $(date --rfc-email)" > ${Logfile}    # just initial line for internal log
 
 function report_error {
 	# arg 1: error code
@@ -64,8 +66,7 @@ function report_error {
 	shift 2
 	local Information="${@}"
 
-	local Logfile=~/pomabuse_internal.log
-	echo "++++++++++ INTERNAL ISSUE ++++++++++" > "${Logfile}"
+	echo "++++++++++ INTERNAL ISSUE ++++++++++" >> "${Logfile}"
 	if [ -r "${COMPILER_LOGFILE}" ]; then cat "${COMPILER_LOGFILE}" >> "${Logfile}"; fi
 	echo "++++++++++ INTERNAL ISSUE ++++++++++" >> "${Logfile}"
 	echo "INTERNAL_FAILURE: ${Information}" | tee -a "${Logfile}" >&2
@@ -77,6 +78,11 @@ function report_error {
 while [ ! -f ${STOP_FLAG} ]; do
 	echo "* Performing Jobs from ${JobsDir}/ ..."
 	PoMaBuSeDir="${PWD}" # make it avail for jobs to access this scripts, f.i. to call automatic tests or demos
+	
+	if [ "Y" == "${VCS_JOBDIR_UPDATE_LOOP}" ]; then
+		${VCS_JOBDIR_TYPE} ${VCS_JOBDIR_UPDATE} ${JobsDir}/ | tee -a "${Logfile}" >&2
+	fi
+	
 	for job in $( ls -1 ${JobsDir}/*.job); do
 		echo -e "\n===================[ Job ${job} starting.. ]=================="
 		REVISION_FILE="./${job##*/}.rev"
