@@ -1,9 +1,9 @@
 # best view with <TAB SIZE 4>
 #
-ProjectName="QT-Sample_QMake"								#	user friendly, human readable project name (for logging and mails)
+ProjectName="QT-Sample_QMake_with_Subs"						#	user friendly, human readable project name (for logging and mails)
 VSCNAME=svn													#	version checkout tool name and functions prefix. simple word (typical: "svn" or "rcs" or ...)
-URL="http://svn.code.sf.net/p/pomabuse/svn/trunk/sample_projects/sample_qmake"	#	remote repository address (i.e. svn+ssh://ourserver.local/repositories/coolprojects/thisone
-SANDBOX=~/auto_sandbox/sample_with_QT_qmake						#	local sandbox path (i.e. ~/sandboxes)
+URL="http://svn.code.sf.net/p/pomabuse/svn/trunk/sample_projects/sample_qmake2"	#	remote repository address (i.e. svn+ssh://ourserver.local/repositories/coolprojects/thisone
+SANDBOX=~/auto_sandbox/sample_with_QT_qmake2						#	local sandbox path (i.e. ~/sandboxes)
 REVISION=HEAD												#	specifier for release version number (HEAD)
 
 # --- this block can get predefined somewhere else
@@ -18,5 +18,5 @@ VCS_UPDATE="${VCSTOOL} update -r ${REVISION}"				# ${SANDBOX} is automatically a
 REPORT_ENGINE=sendmail_report_engine						# function to report from tools*.bash_inc, i.e. mail sending DO NOT USE QUOTES on function names!
 # --- this block 
 
-COMPILE="${COMPILE_QMAKE}"									# direct command or reference to another cfg file value
-
+#COMPILE="${COMPILE_QMAKE}"									# direct command or reference to another cfg file value
+COMPILE="MasterPro=Master;MainPro=Sub1;qmake ${MasterPro}.pro && make clean & cd ${MainPro} && qmake ${MainPro}.pro && lupdate ${MainPro}.pro && lrelease ${MainPro}.pro && cd - && make"									# direct command or reference to another cfg file value
