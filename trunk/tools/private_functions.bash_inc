@@ -216,7 +216,7 @@ function sendmail_report_engine {
 		echo -en "Build Agent was computer '$(hostname)'\n\n"                  			   >> "${mail_complete}"
 		echo -en "Please refer to the embedded logfile below '${logfile}':\n"              >> "${mail_complete}"
 		echo -en "---- logfile starts here: --------------------------------\n"            >> "${mail_complete}"
-		cat "${logfile}"                                                                   >> "${mail_complete}"
+		cat "${logfile}" | fold -w80 -s                                                    >> "${mail_complete}"
 		echo -en "---- logfile ends here. ----------------------------------\n"            >> "${mail_complete}"
 		echo -en "\nThis report was provided by PO Mabuse, https://sourceforge.net/p/pomabuse/svn/"   >> "${mail_complete}"
 		echo -en "\n<EOT>\n\n"                                                             >> "${mail_complete}"
