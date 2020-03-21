@@ -18,5 +18,8 @@ VCS_UPDATE="${VCSTOOL} update -r ${REVISION}"				# ${SANDBOX} is automatically a
 REPORT_ENGINE=sendmail_report_engine						# function to report from tools*.bash_inc, i.e. mail sending DO NOT USE QUOTES on function names!
 # --- this block 
 
+MasterPro=Master
+MainPro=MainApp
+
 # set whole compile command chain in single quotes, evaluation is postponed to eval ${COMPILE} in main Script.
-COMPILE='MasterPro=Master;MainPro=MainApp;qmake ${MasterPro}.pro && make clean && cd ${MainPro} && qmake ${MainPro}.pro && lupdate ${MainPro}.pro && lrelease ${MainPro}.pro && cd - && make'									# direct command or reference to another cfg file value
+COMPILE='qmake -makefile -nocache -o Makefile ${MasterPro}.pro && echo "Step 1 ok" && make clean && echo "Step 2 ok" && cd ${MainPro} && echo "Step 3 ok" && qmake -makefile -nocache -o Makefile ${MainPro}.pro && echo "Step 4 ok" && lupdate ${MainPro}.pro && echo "Step 5 ok" && lrelease ${MainPro}.pro && echo "Step 6 ok" && cd - && echo "Step 7 ok" && make && echo "Step 8 ok" && echo "Step 9=$?"'
