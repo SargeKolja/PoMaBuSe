@@ -12,18 +12,8 @@
 #   name of credentials file
 
 ConfDir=${1:-./config}
-# or shall we get those from config?
-JobsDir=${2:-./jobs}
-CredsDir=${3:-./creds}
-ToolsDir=${4:-./tools}
-
 CONFIG_FILE=${ConfDir}/pomabuse.cfg
-STOP_FLAG=./pomabuse.flg  # if seen this flag, all recent jobs will get finisehd, then not scanned again
-COMPILER_LOGFILE=/tmp/logfile.log
-REVISION_FILE=/tmp/revision.log
 
-#SleepBetweenScans
-#MAKE_ON_X_CORES
 if [ -r "${CONFIG_FILE}" ]; then
 	source "${CONFIG_FILE}" && \
 	echo "+ loaded ${CONFIG_FILE}"
@@ -31,6 +21,24 @@ else
 	echo "! no configuration found in ${CONFIG_FILE}, EXITING!"
 	exit 3
 fi
+
+
+# ToDo: always use './xxxx' or shall we get the prefix from config?
+ToolsDir=./tools
+JobsDir=./jobs
+CredsDir=./creds
+LogDir=./log
+FlagDir=./flags
+
+mkdir -p ${JobsDir}  2>/dev/null
+mkdir -p ${CredsDir} 2>/dev/null
+mkdir -p ${LogDir}   2>/dev/null
+mkdir -p ${FlagDir}  2>/dev/null
+
+STOP_FLAG=$(readlink -f ${FlagDir}/pomabuse.flg)  # if seen this flag, all recent jobs will get finisehd, then not scanned again
+REVISION_FILE=$(readlink -f ${FlagDir}/revision.log)
+COMPILER_LOGFILE=$(readlink -f ${LogDir}/logfile.log)
+Logfile=$(readlink -f ${LogDir}/pomabuse_internal.log)
 
 if [ -z "$(ls -1 ${ToolsDir}/*.bash_inc  2>/dev/null)" ]; then 
 	echo "! No Sub-Functions found in ${ToolsDir}/*.bash_inc, EXITING!"
@@ -51,10 +59,10 @@ if [ -z "$(ls -1 ${JobsDir}/*.job 2>/dev/null)" ]; then
 	exit 3
 fi
 
-declare -i LAST_GOOD_REV=0
+declare -i LAST_GOOD_REV=-1
 declare -i LAST_TRIED_REV=-1
 
-Logfile=~/pomabuse_internal.log
+
 echo "Start $(date --rfc-email)" > ${Logfile}    # just initial line for internal log
 
 function report_error {
@@ -85,14 +93,14 @@ while [ ! -f ${STOP_FLAG} ]; do
 	
 	for job in $( ls -1 ${JobsDir}/*.job); do
 		echo -e "\n===================[ Job ${job} starting.. ]=================="
-		REVISION_FILE="./${job##*/}.rev"
-		COMPILER_LOGFILE="$PWD/${job##*/}.log"
+		REVISION_FILE=$(readlink -f "${FlagDir}/${job##*/}.rev")
+		COMPILER_LOGFILE=$(readlink -f "${LogDir}/${job##*/}.log")
 		echo "=>Job '${job}' started $(date --rfc-email)" | tee "${COMPILER_LOGFILE}"
 		LAST_GOOD_REV=0
 		LAST_TRIED_REV=-1
 		if [ ! -r "${REVISION_FILE}" ]; then
-			echo "- 1st time init ${REVISION_FILE} to LAST_GOOD_REV=0 LAST_TRIED_REV=-1" | tee -a "${COMPILER_LOGFILE}"
-			tools_update_used_versions "${REVISION_FILE}" ${LAST_GOOD_REV} ${LAST_TRIED_REV} -1 2>&1 | tee -a "${COMPILER_LOGFILE}"  # setting last tried below last good forced 1st time compilation
+			echo "- 1st time init ${REVISION_FILE} to LAST_GOOD_REV=${LAST_GOOD_REV} LAST_TRIED_REV=${LAST_TRIED_REV}" | tee -a "${COMPILER_LOGFILE}"
+			tools_update_used_versions "${REVISION_FILE}" ${LAST_GOOD_REV} ${LAST_TRIED_REV} 2>&1 | tee -a "${COMPILER_LOGFILE}"  # setting last tried below last good forced 1st time compilation
 		fi
 		if [ -r "${REVISION_FILE}" ]; then
 			source "${REVISION_FILE}"
@@ -121,7 +129,10 @@ while [ ! -f ${STOP_FLAG} ]; do
 			# echo "LastEditors=${LastEditors}"
 			if [ "YES" == $(${CHECK_SANDBOX} "${SANDBOX}") ]; then
 				echo "- is a ${VSCNAME} sandbox, ok" | tee -a "${COMPILER_LOGFILE}"
-				if [ "YES" == $(${IF_CHANGED} "${SANDBOX}") -o ${LAST_GOOD_REV} -gt ${LAST_TRIED_REV} ]; then
+				if [ "YES" == $(${IF_CHANGED} "${SANDBOX}") \
+				     -o ${LAST_GOOD_REV} -lt ${LAST_TRIED_REV} \
+					 -o ${LAST_GOOD_REV} -le 0 \
+					 -o ${LAST_TRIED_REV} -le 0 ]; then
 					echo "- is more recent on the server, need to dive in ..." | tee -a "${COMPILER_LOGFILE}"
 					echo "invoking ${VCS_UPDATE} ${SANDBOX}" | tee -a "${COMPILER_LOGFILE}"
 					${VCS_UPDATE} "${SANDBOX}" 2>&1 | tee -a "${COMPILER_LOGFILE}"
@@ -138,10 +149,20 @@ while [ ! -f ${STOP_FLAG} ]; do
 							PoMaBuSeDir="${PWD}"
 							cd "${SANDBOX}"
 							echo "${PWD}" | tee -a "${COMPILER_LOGFILE}"
-							echo -e "# calling compiler:\n\t${COMPILE}" | tee -a "${COMPILER_LOGFILE}"
+							DO_REPORT=' && echo "+++OKAY+++$?" || echo "---FAIL---$?"'
+							DO_BUILD_AND_REPORT=${COMPILE}${DO_REPORT}
+							echo -e "# calling compiler:\n\t${DO_BUILD_AND_REPORT}" | tee -a "${COMPILER_LOGFILE}"
 							date --iso-8601=ns | tee -a "${COMPILER_LOGFILE}"
-							( eval ${COMPILE} ) 2>&1 | tee -a "${COMPILER_LOGFILE}"
+							( eval "${DO_BUILD_AND_REPORT}" ) 2>&1 | tee -a "${COMPILER_LOGFILE}"
 							Err=$?
+							Res="$(tail -1 < "${COMPILER_LOGFILE}")"
+							# echo "Err=$Err, Res=$Res, Res:0:9=${Res:0:9}, Res:10=${Res:10}"
+							if [ ${Err} -eq 0 -a "---FAIL---" == ${Res:0:10} ]; then
+								let Err=${Res:10}
+								echo "imported error code Err=$Err"
+							fi
+							# does not work here!? -- echo "PIPESTATUS[*]=${PIPESTATUS[*]}"
+							echo "compiler/script returned ${Err}" | tee -a "${COMPILER_LOGFILE}"
 							date --iso-8601=ns | tee -a "${COMPILER_LOGFILE}"
 							if [ ${Err} -eq 0 ]; then
 								cd ${PoMaBuSeDir}
@@ -187,18 +208,3 @@ while [ ! -f ${STOP_FLAG} ]; do
 	unchanged ${SleepBetweenScans} "${SANDBOX}"
 	echo "~ loop again, until ${STOP_FLAG} is seen"
 done # while [ ! -f ${STOP_FLAG} ]; do
-
-
-#if qmake && make clean && make -j "${NUM_CPUS}" ; then echo YES; else echo NO; fi
-#qmake "CONFIG+=release"
-# make ${MAKE_ON_X_CORES}
-# until becomming part of BiffProcessQ/BiffProcessQ.pro / Makefile, we call it by hand:
-#cd BiffProcessQ
-    #lupdate BiffProcessQ.pro
-    #lrelease BiffProcessQ.pro
-    # a second qmake is required, to have also the generated language files avail!
-    #rm -f Makefile
-    #qmake "CONFIG+=release"
-#cd -
-#
-#sudo sh -c "export INSTALL_ROOT=\"$1\"; make install" 
