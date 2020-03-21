@@ -12,7 +12,7 @@ function svn_scan_authors {
 	local name=""
 	local mailto=""
 	local final=""
-	local author_file="last_authors.lst"
+	local author_file="/tmp/last_authors.lst"
 	# debug... echo $0 $@ >&2
 	
 	LANG=C
