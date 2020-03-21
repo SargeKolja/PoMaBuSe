@@ -46,10 +46,10 @@ unix	{
 
 # Input
 HEADERS += \
-	Sub1.hpp
+	MainApp.hpp
 
 SOURCES += \
-	Sub1.cpp
+	MainApp.cpp
 
 CODECFORTR += UTF8
 
