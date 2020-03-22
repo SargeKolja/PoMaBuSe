@@ -1,0 +1,73 @@
+#!/bin/bash
+# private functions, please no private changes - except improvements for all.
+# please commit your changes back to the project
+
+# This is the sender of reports in type of UTF-8 / ASCII stderr console output
+# Here, ASCII does not mean US-ASCII or NET-ASCII, but more "plain text" 
+# in contrast to ANSI-ESCape colored output (which may get implemented easily)
+
+######################################################################################################
+function CHECK_stderr_ascii_report_engine {
+	echo "OKAY"
+}
+
+######################################################################################################
+# usually called as:
+#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+function stderr_ascii_report_engine {
+	#arg1 = last exit code of compiler
+	#arg2 = "SUCCESS"/"FAILED"
+	#arg3 = Sender Mail Address (From:)
+	#arg4 = Name of the compiled Project (short, handy name)"
+	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
+	#arg6 = logfile with compiler output
+	#arg7..n = list of receiver names
+
+	# echo -e "> reporting via:\n  default_report_engine $@"
+	local lasterr=${1}
+	local status=${2}
+	local FromMail=${3}
+	local ProjectName=${4}
+	local Revision=${5}
+	local logfile=${6}
+	shift 6
+	local receivers=$@
+	
+	#mail_complete=$(get_tempname).mail.txt
+
+	cat <<-HEREDOC
+		> reporting with:
+		: status=${status}
+		: lasterr=${lasterr}
+		: FromMail=${FromMail}
+		: ProjectName=${ProjectName}
+		: Revision=${Revision}
+		: logfile=${logfile}
+	HEREDOC
+
+	if [ -r ${logfile} ]; then
+		echo " ! followed by embedded file '${logfile}'"
+	else
+		echo " ! MISSING file '${logfile}' to embed"
+	fi
+	read_mail_alias ${CredsDir}/*.alias
+	receivers=$(replace_mail_alias "${receivers}")
+	FromMail=$(replace_mail_alias "${FromMail}")
+	cat <<-HEREDOC
+		> resolved mails:
+		: FromMail=${FromMail}
+		: receivers=${receivers}
+
+	HEREDOC
+
+	echo -en "Subject: ${status} compiled of ${ProjectName} rev ${Revision} on $(hostname)\n"
+	cat "${logfile}" | fold -w80 -s
+	echo "DONE."
+}
+
+
+
+
+
+######################################################################################################

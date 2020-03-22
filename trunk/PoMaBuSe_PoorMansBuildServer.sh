@@ -65,23 +65,6 @@ declare -i LAST_TRIED_REV=-1
 
 echo "Start $(date --rfc-email)" > ${Logfile}    # just initial line for internal log
 
-function report_error {
-	# arg 1: error code
-	# arg 2: Job or Project name
-	# arg 3..n: additional text
-	local ErrorCode=${1}
-	local ProjectName=${3}
-	shift 2
-	local Information="${@}"
-
-	echo "++++++++++ INTERNAL ISSUE ++++++++++" >> "${Logfile}"
-	if [ -r "${COMPILER_LOGFILE}" ]; then cat "${COMPILER_LOGFILE}" >> "${Logfile}"; fi
-	echo "++++++++++ INTERNAL ISSUE ++++++++++" >> "${Logfile}"
-	echo "INTERNAL_FAILURE: ${Information}" | tee -a "${Logfile}" >&2
-	
-	default_report_engine ${ErrorCode} "INTERNAL_FAILURE" "${ToAdminMail}" "${ProjectName}" "0" "${Logfile}" "${ToAdminMail}"
-}
-
 
 while [ ! -f ${STOP_FLAG} ]; do
 	echo "* Performing Jobs from ${JobsDir}/ ..."
@@ -136,7 +119,7 @@ while [ ! -f ${STOP_FLAG} ]; do
 					echo "- is more recent on the server, need to dive in ..." | tee -a "${COMPILER_LOGFILE}"
 					echo "invoking ${VCS_UPDATE} ${SANDBOX}" | tee -a "${COMPILER_LOGFILE}"
 					${VCS_UPDATE} "${SANDBOX}" 2>&1 | tee -a "${COMPILER_LOGFILE}"
-					if [ "NO" == $(${IF_CHANGED} "${SANDBOX}") ]; then
+					if [ 0 -eq ${PIPESTATUS[0]} -a "NO" == $(${IF_CHANGED} "${SANDBOX}") ]; then
 						echo "- updated successfully, can BUILD now" | tee -a "${COMPILER_LOGFILE}"
 						TRY_THIS_REV=$(${GET_RELEASEID} "${SANDBOX}")
 						if [ ${TRY_THIS_REV} -gt ${LAST_TRIED_REV} ]; then
@@ -183,7 +166,9 @@ while [ ! -f ${STOP_FLAG} ]; do
 							echo "? already tried to build version ${LAST_TRIED_REV}, skipping this"
 						fi
 					else
-						echo "! failed updating or commit in progress, skipping this time"
+						# echo "! failed updating or commit in progress, skipping this time"
+						report_error $? "${ProjectName}" "! FAILED updating sandbox ${SANDBOX}"
+						mv "${job}" ${job}.broken  #to prevent stop of whole builder and to prevent endless mail loops
 					fi
 				else
 					echo "- is still unchanged, nothing to be done"

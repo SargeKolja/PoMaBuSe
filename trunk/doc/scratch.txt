@@ -1,0 +1,40 @@
+scratch.txt
+
+22:
+	CHECK_stderr_ascii_report_engine
+	[v]	echo / print >&2	
+	stderr_ascii_report_engine
+	[v]	echo / print >&2
+
+24:
+	CHECK_sendmail_report_engine
+	[v]	-> sendmail
+	sendmail_report_engine
+	[/]	-> sendmail_${REPORT_ENGINE_FMT}_report_engine
+	[v]	-> report_error
+	[v]	-> stderr_report_engine
+
+25:
+	CHECK_sendmail_ascii_report_engine
+	[v]	-> CHECK_sendmail_report_engine
+	sendmail_ascii_report_engine
+	[v]	-> sendmail
+
+80:
+	report_error
+	[v]	-> default_report_engine
+	[v]		-> pomabuse.cfg
+	
+/TEST_sendmail.bash:
+	[v]	-> sendmail_ascii_report_engine
+	
+	
+.job:
+	REPORT_ENGINE=sendmail_report_engine
+	[v]	-> sendmail_report_engine
+	REPORT_ENGINE=sendmail_ascii_report_engine
+	[v]	-> sendmail_ascii_report_engine
+	
+pomabuse.cfg:
+	[v]	-> default_report_engine
+	[v]		-> stderr_ascii_report_engine

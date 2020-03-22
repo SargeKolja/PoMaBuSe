@@ -1,0 +1,44 @@
+#!/bin/bash
+# private functions, please no private changes - except improvements for all.
+# please commit your changes back to the project
+
+# This is the sender of reports in type of UTF-8 / ASCII stderr console output
+# Here, ASCII does not mean US-ASCII or NET-ASCII, but more "plain text" 
+# in contrast to ANSI-ESCape colored output (which may get implemented easily)
+
+######################################################################################################
+function CHECK_stderr_report_engine {
+	echo "OKAY"
+}
+
+######################################################################################################
+# usually called as:
+#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+function stderr_report_engine {
+	#arg1 = last exit code of compiler
+	#arg2 = "SUCCESS"/"FAILED"
+	#arg3 = Sender Mail Address (From:)
+	#arg4 = Name of the compiled Project (short, handy name)"
+	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
+	#arg6 = logfile with compiler output
+	#arg7..n = list of receiver names
+
+	# echo -e "> reporting via:\n  generic stderr_report_engine $@"
+	
+	if [ -z "${REPORT_ENGINE_FMT}" ]; then
+		REPORT_ENGINE_FMT="ascii"
+	fi;
+	
+	declare -f stderr_${REPORT_ENGINE_FMT}_report_engine > /dev/null;
+	if [ $? -eq 0 ]; then
+		stderr_${REPORT_ENGINE_FMT}_report_engine $@
+	else
+		report_error ${1} "${4}" "$(basename ${0}): sendmail_${REPORT_ENGINE_FMT}_report_engine does not exist, but was reqested."
+		stderr_report_engine $@
+		false
+	fi 
+}
+
+
+######################################################################################################
