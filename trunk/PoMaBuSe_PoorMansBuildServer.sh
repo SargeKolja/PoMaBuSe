@@ -7,8 +7,8 @@
 #	local sandbox path (~/sandboxes)
 #   specifier for branches (/trunk)
 #   specifier for release version number (HEAD)
-#   name of the Changes-Scanner (a bash include file in Tools, defining how to see if server has newer version)
-#   name of the Release-Scanner (a bash include file in Tools, defining how to get the specific release version number)
+#   name of the Changes-Scanner (a bash include file in lib, defining how to see if server has newer version)
+#   name of the Release-Scanner (a bash include file in lib, defining how to get the specific release version number)
 #   name of credentials file
 
 ConfDir=${1:-./config}
@@ -24,7 +24,7 @@ fi
 
 
 # ToDo: always use './xxxx' or shall we get the prefix from config?
-ToolsDir=./tools
+lib=./lib
 JobsDir=./jobs
 CredsDir=./creds
 LogDir=./log
@@ -40,18 +40,18 @@ REVISION_FILE=$(readlink -f ${FlagDir}/revision.log)
 COMPILER_LOGFILE=$(readlink -f ${LogDir}/logfile.log)
 Logfile=$(readlink -f ${LogDir}/pomabuse_internal.log)
 
-if [ -z "$(ls -1 ${ToolsDir}/*.bash_inc  2>/dev/null)" ]; then 
-	echo "! No Sub-Functions found in ${ToolsDir}/*.bash_inc, EXITING!"
+if [ -z "$(ls -1 ${lib}/*.bash_inc  2>/dev/null)" ]; then 
+	echo "! No Sub-Functions found in ${lib}/*.bash_inc, EXITING!"
 	exit 3
 else
-	for tool in $( ls -1 ${ToolsDir}/*.bash_inc  2>/dev/null ); do
-		source ${tool} && \
-		echo "+ loaded ${tool}"
+	for library in $( ls -1 ${lib}/*.bash_inc  2>/dev/null ); do
+		source ${library} && \
+		echo "+ loaded ${library}"
 	done
 fi
 
 if [ -z "$(ls -1 ${CredsDir}/*.cfg 2>/dev/null)" ]; then
-	echo "? no Credentials found in ${CredsDir}/*.cfg, WARNING!"
+	echo "? no Credentials found in ${CredsDir}/*.cfg, is this intentional?"
 fi
 
 if [ -z "$(ls -1 ${JobsDir}/*.job 2>/dev/null)" ]; then
