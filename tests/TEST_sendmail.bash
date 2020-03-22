@@ -33,4 +33,4 @@ svn_append_log_to_file "${source_file}/.." "${compilation_logfile}" "213" "${Rev
 
 # simulation of wrong sender -- FromMail="inval@id.sample"
 #default_report_engine 3 "FAILED" "${FromMail}" "${ProjectName}" ${Revision} "${compilation_logfile}"  "${receivers}"
-sendmail_report_engine 3 "FAILED" "${FromMail}" "${ProjectName}" ${Revision} "${compilation_logfile}"  "${receivers}"
+sendmail_ascii_report_engine 3 "FAILED" "${FromMail}" "${ProjectName}" ${Revision} "${compilation_logfile}"  "${receivers}"

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# depends on other report engines (default_report_engine, which itself may depend on other module(s))
+
+function report_error {
+	# arg 1: error code
+	# arg 2: Job or Project name
+	# arg 3..n: additional text
+	local ErrorCode=${1}
+	local ProjectName=${2}
+	shift 2
+	local Information="${@}"
+
+	echo "++++++++++ INTERNAL ISSUE ++++++++++" >> "${Logfile}"
+	if [ -r "${COMPILER_LOGFILE}" ]; then cat "${COMPILER_LOGFILE}" >> "${Logfile}"; fi
+	echo "++++++++++ INTERNAL ISSUE ++++++++++" >> "${Logfile}"
+	echo "INTERNAL_FAILURE: \"${Information}\"" | tee -a "${Logfile}" >&2
+	
+	default_report_engine ${ErrorCode} "INTERNAL_FAILURE" "${ToAdminMail}" "${ProjectName}" "0" "${Logfile}" "${ToAdminMail}"
+}
+

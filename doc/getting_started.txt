@@ -80,7 +80,7 @@ Step C:
 ~~~~~~~
 	Configure for Comfort
 	Mails. You can skip the sendmail/msmtp part for now and do it later. Just open all *.job files and 
-	replace "REPORT_ENGINE=sendmail_report_engine"  by	"REPORT_ENGINE=stderr_report_engine"
+	replace "REPORT_ENGINE=sendmail_ascii_report_engine"  by	"REPORT_ENGINE=stderr_report_engine"
 	Or, if you like to have the mail system up and running from start, you should be able to call
 		which sendmail
 		MAILADDRESS="john.doe@example.com"

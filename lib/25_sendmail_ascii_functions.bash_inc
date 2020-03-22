@@ -1,0 +1,120 @@
+#!/bin/bash
+# private functions, please no private changes - except improvements for all.
+# please commit your changes back to the project
+
+# This is the sender of reports in type of UTF-8 / ASCII e-mails.
+# Here, ASCII does not mean US-ASCII or NET-ASCII, but more "plain text" 
+# in contrast to RTF/HTML mails (which may get implemented easily)
+
+######################################################################################################
+function CHECK_sendmail_ascii_report_engine {
+		 CHECK_sendmail_report_engine
+}
+
+######################################################################################################
+# usually called as:
+#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#
+# sendmail alternative on MSYS2: "mSMTP"
+#		pacman -S mingw-w64-i686-msmtp mingw-w64-i686-libsecret
+#		editor ${ALLUSERSPROFILE}/msmtprc.txt	# system/root mails
+#		editor ~/msmtprc.txt  					# user mails
+#
+# sendmail alternative on Ubuntu/Debian: "mSMTP" or Nullmailer, I prefer mSMTP here since years
+#		sudo apt[-get] install msmtp msmtp-mta					# or just msmtp and then: ln -s /usr/bin/msmtp /usr/sbin/sendmail
+#		echo "set sendmail=\"/usr/bin/msmtp -t\"" | sudo tee -a /etc/mail.rc					# set as sendmail
+#		editor /etc/aliases																		# mapping local users to emails
+#		sudo touch /etc/msmtprc && sudo chmod 600 /etc/msmtprc && sudo editor /etc/msmtprc		# system/root mails
+#		touch ~/msmtprc && chmod 600 ~/msmtprc && editor ~/msmtprc								# user mails
+#
+# not yet tested but should work: 
+#		s-nail (this is POSIX mailx for Arch/Manjaro, also avail in apt for debians/'buntus)
+#
+function sendmail_ascii_report_engine {
+	#arg1 = last exit code of compiler
+	#arg2 = "SUCCESS"/"FAILED"
+	#arg3 = Sender Mail Address (From:)
+	#arg4 = Name of the compiled Project (short, handy name)"
+	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
+	#arg6 = logfile with compiler output
+	#arg7..n = list of receiver names
+	echo -e "> reporting via:\n  sendmail_report_engine $@"
+	local lasterr=${1}
+	local status=${2}
+	local FromMail=${3}
+	local ProjectName=${4}
+	local Revision=${5}
+	local logfile=${6}
+	shift 6
+	local receivers=$@
+	
+	mail_complete=$(get_tempname).mail.txt
+
+	cat <<-HEREDOC
+		> reporting with:
+		: status=${status}
+		: lasterr=${lasterr}
+		: FromMail=${FromMail}
+		: ProjectName=${ProjectName}
+		: Revision=${Revision}
+		: logfile=${logfile}
+		: receivers=${receivers}
+		: mail_complete=${mail_complete}
+	HEREDOC
+
+	if [ -r ${logfile} ]; then
+		echo " ! followed by embedded file '${logfile}'"
+	else
+		echo " ! MISSING file '${logfile}' to embed"
+	fi
+	read_mail_alias ${CredsDir}/*.alias
+	receivers=$(replace_mail_alias "${receivers}")
+	FromMail=$(replace_mail_alias "${FromMail}")
+	cat <<-HEREDOC
+		> resolved mails:
+		: FromMail=${FromMail}
+		: receivers=${receivers}
+
+	HEREDOC
+
+	for Sender in ${FromMail//,/$IFS}; do
+		echo ". looping for all senders: ${Sender}"
+		# --- todo: make a HEREDOC with placeholders? ---
+		echo -en "From: ${Sender}\n"                                                      > ${mail_complete}
+		#-nn- for recipient in ${receivers//,/$IFS}; do
+		#-nn- 	echo -en "To: ${recipient}\n"                                              >> ${mail_complete}
+		#-nn- done
+		echo -en "To: ${receivers}\n"                                                      >> ${mail_complete}
+		echo -en "MIME-Version: 1.0\n"                                                     >> ${mail_complete}
+		echo -en "Content-Type: text/plain; charset=utf-8\n"                               >> ${mail_complete}
+		echo -en "Content-Transfer-Encoding: 8bit\n"                                       >> ${mail_complete}
+		echo -en "Subject: ${status} compiled of ${ProjectName} rev ${Revision} on $(hostname)\n"	>> ${mail_complete}
+		echo -en "\n"                                                                      >> ${mail_complete}
+
+		echo -en "I report that ${ProjectName} rev ${Revision} has compiled with ${status}, code=${lasterr}\n" >> "${mail_complete}"
+		echo -en "Time of reporting this was $(date --rfc-email)\n"               		   >> "${mail_complete}"
+		echo -en "Build Agent was computer '$(hostname)'\n\n"                  			   >> "${mail_complete}"
+		echo -en "Please refer to the embedded logfile below '${logfile}':\n"              >> "${mail_complete}"
+		echo -en "---- logfile starts here: --------------------------------\n"            >> "${mail_complete}"
+		cat "${logfile}" | fold -w80 -s                                                    >> "${mail_complete}"
+		echo -en "---- logfile ends here. ----------------------------------\n"            >> "${mail_complete}"
+		echo -en "\nThis report was provided by PO Mabuse, https://sourceforge.net/p/pomabuse/svn/"   >> "${mail_complete}"
+		echo -en "\n<EOT>\n\n"                                                             >> "${mail_complete}"
+		
+		echo "invoking sendmail for email from ${Sender} to ${receivers} ..."
+		# cat ${mail_complete} | sendmail -f${Sender} -d -- ${receivers}
+		cat ${mail_complete} | sendmail -f${Sender} -- ${receivers}
+		if [ $? -eq 0 ]; then
+			head -2 ${mail_complete}
+			rm -f ${mail_complete}
+			echo "DONE."
+		else
+			echo "FAILED! $?" >&2
+			head -10 ${mail_complete}
+		fi
+	done # for Sender in ${FromMail//,/$IFS}; do
+}
+
+
+######################################################################################################

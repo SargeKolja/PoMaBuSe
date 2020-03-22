@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# private functions, please no private changes - except improvements for all.
+# please commit your changes back to the project
+
+# This is the sender of reports in type of e-mails
+# here, neither ASCII nor RTF/HTML is defined. 
+# This is just a trampoline
+
+######################################################################################################
+function CHECK_sendmail_report_engine {
+	# echo "check existence of sendmail" >&2
+	echo -en "  ->  " >&2
+	if which sendmail >&2; then
+		echo "OKAY"
+		# echo "sendmail is here" >&2
+	else
+		echo "MISSING"
+		# echo "sendmail is absent" >&2
+	fi
+}
+
+######################################################################################################
+# usually called as:
+#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#
+# sendmail alternative on MSYS2: "mSMTP"
+#		pacman -S mingw-w64-i686-msmtp mingw-w64-i686-libsecret
+#		editor ${ALLUSERSPROFILE}/msmtprc.txt	# system/root mails
+#		editor ~/msmtprc.txt  					# user mails
+#
+# sendmail alternative on Ubuntu/Debian: "mSMTP" or Nullmailer, I prefer mSMTP here since years
+#		sudo apt[-get] install msmtp msmtp-mta					# or just msmtp and then: ln -s /usr/bin/msmtp /usr/sbin/sendmail
+#		echo "set sendmail=\"/usr/bin/msmtp -t\"" | sudo tee -a /etc/mail.rc					# set as sendmail
+#		editor /etc/aliases																		# mapping local users to emails
+#		sudo touch /etc/msmtprc && sudo chmod 600 /etc/msmtprc && sudo editor /etc/msmtprc		# system/root mails
+#		touch ~/msmtprc && chmod 600 ~/msmtprc && editor ~/msmtprc								# user mails
+#
+# not yet tested but should work: 
+#		s-nail (this is POSIX mailx for Arch/Manjaro, also avail in apt for debians/'buntus)
+#
+function sendmail_report_engine {
+	#arg1 = last exit code of compiler
+	#arg2 = "SUCCESS"/"FAILED"
+	#arg3 = Sender Mail Address (From:)
+	#arg4 = Name of the compiled Project (short, handy name)"
+	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
+	#arg6 = logfile with compiler output
+	#arg7..n = list of receiver names
+	echo -e "> reporting via:\n  generic sendmail_report_engine $@"
+	
+	if [ -z "${REPORT_ENGINE_FMT}" ]; then
+		REPORT_ENGINE_FMT="ascii"
+	fi;
+	
+	declare -f sendmail_${REPORT_ENGINE_FMT}_report_engine > /dev/null;
+	if [ $? -eq 0 ]; then
+		sendmail_${REPORT_ENGINE_FMT}_report_engine $@
+	else
+		report_error ${1} "${4}" "$(basename ${0}): sendmail_${REPORT_ENGINE_FMT}_report_engine does not exist, but was reqested."
+		stderr_report_engine $@
+		false
+	fi
+}
+
+
+######################################################################################################
