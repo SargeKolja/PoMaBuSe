@@ -16,4 +16,4 @@ COMPILE_BASH=bash
 COMPILE_C=gcc								#	this does not have a real productive use case, but for testing it's fine
 COMPILE_CPP=g++								#	same here
 COMPILE_MAKE="make ${MAKE_ON_X_CORES} -f"	#	THIS ONE is your friend
-COMPILE_QMAKE=(qmake && make)				#	AND THIS
+COMPILE_QMAKE='qmake && make ${MAKE_ON_X_CORES}'	#	AND THIS
