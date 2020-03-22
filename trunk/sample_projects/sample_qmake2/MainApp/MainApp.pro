@@ -18,15 +18,25 @@ CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++11
 
 
-unix	{
+unix:debug {
 	LIBS += -Wl,-v \
-	-L../Sub2 -lsub2 \
-	-L../Sub3 -lsub3 \
+	-L../Sub2/debug -lsub2 \
+	-L../Sub3/debug -lsub3 \
 	-ldl
-	} win32-g++ {
+	} unix:release {
 	LIBS += -Wl,-v \
-	-L../Sub2 -lsub2 \
-	-L../Sub3 -lsub3 \
+	-L../Sub2/release -lsub2 \
+	-L../Sub3/release -lsub3 \
+	-ldl
+	} win32-g++:debug {
+	LIBS += -Wl,-v \
+	-L../Sub2/debug -lsub2 \
+	-L../Sub3/debug -lsub3 \
+	-ldl
+	} win32-g++:release {
+	LIBS += -Wl,-v \
+	-L../Sub2/release -lsub2 \
+	-L../Sub3/release -lsub3 \
 	-ldl
 	}
 
