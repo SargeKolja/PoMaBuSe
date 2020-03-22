@@ -1,0 +1,104 @@
+#!/bin/bash
+
+###################################################################################################### 
+# svn_scan_release
+###################################################################################################### 
+function svn_scan_release {
+	# arg 1; sandbox path
+	local SandBox=${1}
+	LANG=C
+	svn info ${SandBox} | grep '^Last.Changed.Rev:' | grep -Eo '[[:digit:]]*'
+}
+
+
+###################################################################################################### 
+# svn_scan_changes
+###################################################################################################### 
+# ATN! this function will NOT detect a "change" if a new file was added f.i. to an empty, committed folder
+#      comparison of the Revision numbers is required in addition!!!
+
+function svn_scan_changes {
+	# arg 1; sandbox path
+	local SandBox=${1}
+	LANG=C
+	if svn status -u -q ${SandBox} | grep -E '(^........\*)|(^!)' >&2; then
+		# Has Changes
+		echo "YES"
+	else
+		# SandBox in Sync with Server
+		echo "NO"
+	fi
+}
+
+###################################################################################################### 
+# svn_scan_authors
+###################################################################################################### 
+# mail="To: "; LANG=C svn log -r216:HEAD | grep -E "^r[0-9]* |" | cut -d '|' -f 2 | sort | uniq > names.txt; while read name; do mail="$mail $name"; done < names.txt; echo $mail
+
+function svn_scan_authors {
+	# arg 1: sandbox path (also works with URL + trunk/branch/tag)
+	# arg 2: previous good compiled revision
+	# arg 3: this compiled revision
+	local SandBox=${1}
+	local FromVersion=${2:-HEAD}
+	local ToVersion=${3:-HEAD}
+	local name=""
+	local mailto=""
+	local final=""
+	local author_file="/tmp/last_authors.lst"
+	# debug... echo $0 $@ >&2
+	
+	LANG=C
+	rm -f ${author_file}
+	# debug... echo "svn log -r ${FromVersion}:${ToVersion} ${SandBox}" >&2
+	svn log -r ${FromVersion}:${ToVersion} ${SandBox} | grep -E '^r[0-9][0-9]* \|' | cut -d '|' -f 2 | sort | uniq > ${author_file}
+	while read name; do
+		mailto="${mailto}${name},"
+	done < ${author_file}
+	# echo "File:"; cat ${author_file}
+	# echo "Variable: '${mailto}'"
+	mailto="$(echo -e "${mailto}" | tr -d '[:space:]')"
+	# echo "Variable: '${mailto}'"
+	final="${mailto%,}"
+	# echo "Variable: '${final}'"
+	echo "${final}"
+}
+
+
+###################################################################################################### 
+# svn_check_sandbox
+###################################################################################################### 
+function svn_check_sandbox {
+	# arg 1; sandbox path
+	local SandBox=${1}
+	LANG=C
+	#svn stat ${SandBox} 2> >(grep -E '^svn:') | grep '^svn:'>/dev/null
+	svn stat ${SandBox} 2> >(grep -E '^svn:') | grep '^svn:' >&2
+	if [ $? -eq 0 ]; then
+		# Not a SandBox
+		echo "NO"
+	else
+		# It is a SandBox
+		echo "YES"
+	fi
+}
+
+
+###################################################################################################### 
+# svn_append_log_to_file
+###################################################################################################### 
+function svn_append_log_to_file {
+	# arg1: Sandbox
+	# arg2: destination file
+	# arg3: version-from
+	# arg3: version-to
+	local SandBox=${1}
+	local DestFile=${2}
+	local Oldest=${3}
+	local Newest=${4:-HEAD}
+	
+	# echo "svn_append_log_to_file $@" >&2
+
+	svn log -v -r ${Oldest}:${Newest} "${SandBox}" | grep -v "^$" >> ${DestFile}
+}
+
