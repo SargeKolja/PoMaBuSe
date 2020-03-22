@@ -1,22 +1,13 @@
 #!/bin/bash
 
 ###################################################################################################### 
-# svn_scan_release
-###################################################################################################### 
-function svn_scan_release {
-	# arg 1; sandbox path
-	local SandBox=${1}
-	LANG=C
-	svn info ${SandBox} | grep '^Last.Changed.Rev:' | grep -Eo '[[:digit:]]*'
-}
-
-
-###################################################################################################### 
 # svn_scan_changes
+# IN : arg1=Sandbox to be evaluated
+# OUT: (stdout)="YES"|"NO" if Sandbox is more or less up to date with Server.
 ###################################################################################################### 
 # ATN! this function will NOT detect a "change" if a new file was added f.i. to an empty, committed folder
 #      comparison of the Revision numbers is required in addition!!!
-
+###################################################################################################### 
 function svn_scan_changes {
 	# arg 1; sandbox path
 	local SandBox=${1}
@@ -30,8 +21,26 @@ function svn_scan_changes {
 	fi
 }
 
+
+###################################################################################################### 
+# svn_scan_release
+# IN : arg1=Sandbox (or URL) to be evaluated
+# OUT: (stdout)=Last Edited Revisions number
+###################################################################################################### 
+function svn_scan_release {
+	# arg 1; sandbox path
+	local SandBox=${1}
+	LANG=C
+	svn info ${SandBox} | grep '^Last.Changed.Rev:' | grep -Eo '[[:digit:]]*'
+}
+
+
 ###################################################################################################### 
 # svn_scan_authors
+# IN : arg1=Sandbox (or URL) to be evaluated
+# IN : arg2=oldest revision to investigate
+# IN : arg3=latest revision to investigate
+# OUT: (stdout) Comma separated list of VCS committers names (typical email addresses or callsigns)
 ###################################################################################################### 
 # mail="To: "; LANG=C svn log -r216:HEAD | grep -E "^r[0-9]* |" | cut -d '|' -f 2 | sort | uniq > names.txt; while read name; do mail="$mail $name"; done < names.txt; echo $mail
 
@@ -67,6 +76,8 @@ function svn_scan_authors {
 
 ###################################################################################################### 
 # svn_check_sandbox
+# IN : arg1=Sandbox (or URL) to be evaluated
+# OUT: (stdout)="YES"|"NO" if Sandbox is more or less a valid sandbox.
 ###################################################################################################### 
 function svn_check_sandbox {
 	# arg 1; sandbox path
@@ -86,6 +97,11 @@ function svn_check_sandbox {
 
 ###################################################################################################### 
 # svn_append_log_to_file
+# IN : arg1=Sandbox (or URL) to be evaluated
+# IN : arg2=File to receive the VCS changelog
+# IN : arg3=oldest revision to investigate
+# IN : arg4=latest revision to investigate
+# OUT: none (only the arg2 got changed)
 ###################################################################################################### 
 function svn_append_log_to_file {
 	# arg1: Sandbox
