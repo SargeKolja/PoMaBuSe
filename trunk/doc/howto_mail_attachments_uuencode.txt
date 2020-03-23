@@ -1,0 +1,80 @@
+We need either "uuencode" or "base64"
+
+"base64" is part of "coreutils" and should be available on almost all systems right now.
+
+"uuencode" - where is it?
+
+1st) uuencode is doing a little bit more compared to base64:
+	* without -m / without --base64, it uses the 30 jears old UUENCODING, which is not very wide supported anymore
+		Header with -m :
+			begin 644 attachment.png
+		unclear, how to properly embed this into a mail readable by thunderbird
+	* with -m ( short for --base64 ) it does the same as base64, but prefixes the mail with a header line
+		that seems not to be required since MIME/Multipart
+		Header with -m :
+			begin-base64 644 attachment.png
+		unclear, how to properly embed this into a mail readable by thunderbird
+	* with -e, it also base64 encodes the filename of the header line, which could be nice for i18n names,
+		but as said, ... seems seems to be not required.
+		Header with -me :	
+			begin-base64-encoded 644 YXR0YWNobWVudC5wbmc=
+		unclear, how to properly embed this into a mail readable by thunderbird
+
+Anyway, you want go with uuencode? ok.
+
+ARCH (Arch based Linux, MSYS)
+
+	which uuencode
+	<nothing>
+	pkgfile --update
+	pkgfile -s uuencode
+	<nothing>
+	
+	(not very descriptive, but google said: "sharutil" contains uuencode)
+
+	pacman -Ss sharutil
+	msys/sharutils 4.15.2-1
+		Makes so-called shell archives out of many files
+
+	(still not very helpful, but the package name is "sharutils")
+	
+	pacman -S sharutils
+	...
+	uuencode -v
+		uuencode (GNU sharutils) 4.15.2
+
+
+DEB (Debian/Ubuntu)
+
+	which uuencode
+	<nothing>
+	apt search uuencode | grep -B 1 'uuencode'
+		sharutils/bionic 1:4.15.2-3
+			shar, unshar, uuencode, uudecode
+
+	("sharutils" contains uuencode)
+	
+	sudo apt install sharutils
+	...
+	uuencode -v
+		uuencode (GNU sharutils) 4.15.2
+
+
+--- we have it!
+okay, the remains are baked into in pomabuse libs this way:
+
+	uuencode -me /path/filename.txt | sendmail -s "Subject of the Mail" -- name_to@example.com
+
+
+A [completely?] different way ("mutt"):
+
+	echo -e "This is a Mail Body\n2. Line" | mutt -s "Subject of the Mail" -a "./attachment.jpg" -- name_to@example.com
+	
+Another different tool ("mail"):
+
+	uuencode /path/filename.txt attached_filename.txt | mail -v -s "Subject of the Mail" -r name_from@example.com name_to@example.com
+
+Still another different tool ("mail"):
+	mpack -s "Subject of the Mail" /path/filename.txt name_to@example.com
+
+
