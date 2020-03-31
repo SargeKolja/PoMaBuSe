@@ -1,0 +1,68 @@
+#!/bin/bash
+# private functions, please no private changes - except improvements for all.
+# please commit your changes back to the project
+
+######################################################################################################
+#
+# sample invocation:
+# 	cat ${InputLogfile} | ColorizeANSI | tee ${OutColoredFile}
+# 	cat ${OutColoredFile} | ColorwashANSI | tee ${UnColoredFile}
+#
+######################################################################################################
+
+
+######################################################################################################
+#
+function ansi_red { 
+	echo -en ${AnsiColorERROR}
+	}
+
+######################################################################################################
+#
+function ansi_grn { 
+	echo -en ${AnsiColorOKAY}
+	}
+
+######################################################################################################
+#
+function ansi_yel {
+	echo -en ${AnsiColorWARN}
+	}
+
+######################################################################################################
+#
+function ansi_end {
+	echo -en ${AnsiColorNORMAL}
+	}
+
+######################################################################################################
+#
+# or better using this instead of the Perlish [[ =~ ]] construct?
+#      | sed -e 's/.*\bWARN.*/\x1b[7m&\x1b[0m/i' -e 's/.*\bERR.*/\x1b[93;41m&\x1b[0m/i'
+# ???
+#
+function ColorizeANSI {
+    while IFS='' read -r line; do
+        if   [[ ${line} =~ ${MatchERROR} ]]; then
+            echo -e "$(ansi_red)${line}$(ansi_end)"
+        elif [[ ${line} =~ ${MatchWARN} ]]; then
+            echo -e "$(ansi_yel)${line}$(ansi_end)"
+        elif [[ ${line} =~ ${MatchOKAY} ]]; then
+            echo -e "$(ansi_grn)${line}$(ansi_end)"
+        else
+            echo "${line}";
+        fi;
+    done
+	exit ${PIPESTATUS[0]};
+}
+
+######################################################################################################
+#
+function ColorwashANSI {
+    while IFS='' read -r line; do
+		echo "${line}" | sed s"/${MatchANSI}//g"
+    done
+	exit ${PIPESTATUS[0]};
+}
+
+######################################################################################################
