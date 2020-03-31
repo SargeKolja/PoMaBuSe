@@ -42,17 +42,21 @@ function ansi_end {
 # ???
 #
 function ColorizeANSI {
-    while IFS='' read -r line; do
-        if   [[ ${line} =~ ${MatchERROR} ]]; then
-            echo -e "$(ansi_red)${line}$(ansi_end)"
-        elif [[ ${line} =~ ${MatchWARN} ]]; then
-            echo -e "$(ansi_yel)${line}$(ansi_end)"
-        elif [[ ${line} =~ ${MatchOKAY} ]]; then
-            echo -e "$(ansi_grn)${line}$(ansi_end)"
-        else
-            echo "${line}";
-        fi;
-    done
+	while IFS='' read -r line; do
+		if ${UseAnsiColorFilter}; then
+			if   [[ ${line} =~ ${MatchERROR} ]]; then
+				echo -e "$(ansi_red)${line}$(ansi_end)"
+			elif [[ ${line} =~ ${MatchWARN} ]]; then
+				echo -e "$(ansi_yel)${line}$(ansi_end)"
+			elif [[ ${line} =~ ${MatchOKAY} ]]; then
+				echo -e "$(ansi_grn)${line}$(ansi_end)"
+			else
+				echo "${line}" # only forward all lines without magic matching words
+			fi
+		else
+			echo "${line}" # just forward all lines
+		fi
+	done
 	exit ${PIPESTATUS[0]};
 }
 
@@ -64,5 +68,17 @@ function ColorwashANSI {
     done
 	exit ${PIPESTATUS[0]};
 }
+
+
+######################################################################################################
+#
+function ColorwashANSI_file {
+	local DestinationFile=${2}
+	if [ -z "${DestinationFile}" ]; then DestinationFile="${1}.washed"; fi
+
+	sed s"/${MatchANSI}//g" ${1} > ${DestinationFile}
+	cp -f ${DestinationFile} ${1}
+}
+
 
 ######################################################################################################

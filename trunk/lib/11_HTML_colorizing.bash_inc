@@ -93,22 +93,53 @@ function ToColorHTMLDOC {
 
 ######################################################################################################
 #
+# generate a complete HTML file/stream from input file
+#
+function ToColorHTMLDOC_file {
+	local DestinationFile=${2}
+	if [ -z "${DestinationFile}" ]; then DestinationFile="${1}.html"; fi
+
+	HTML_opening           > "${DestinationFile}"
+	ColorizeHTML_file "${1}" "${DestinationFile}"
+	HTML_closing          >> "${DestinationFile}"
+}
+
+######################################################################################################
+#
 # generate a colored fragment of HTML file/stream from stdin,
 # to become a complete HTML, th Header and trailer need to get prefixed/postfixed, s.a. ToColorHTMLDOC()
 #
 function ColorizeHTML {
     while IFS='' read -r line; do
-        if   [[ ${line} =~ ${MatchERROR} ]]; then
-            echo -e "$(html_red)${line}$(html_end)"
-        elif [[ ${line} =~ ${MatchWARN} ]]; then
-            echo -e "$(html_yel)${line}$(html_end)"
-        elif [[ ${line} =~ ${MatchOKAY} ]]; then
-            echo -e "$(html_grn)${line}$(html_end)"
-        else
-            echo "${line}<br>";
-        fi;
+		if ${UseHTMLColorFilter}; then
+			if   [[ ${line} =~ ${MatchERROR} ]]; then
+				echo -e "$(html_red)${line}$(html_end)"
+			elif [[ ${line} =~ ${MatchWARN} ]]; then
+				echo -e "$(html_yel)${line}$(html_end)"
+			elif [[ ${line} =~ ${MatchOKAY} ]]; then
+				echo -e "$(html_grn)${line}$(html_end)"
+			else
+				echo "${line}<br>" # only forward all lines without magic matching words, insert a line break
+			fi
+		else
+			echo "${line}" # just forward all lines 1:1
+		fi
     done
 	exit ${PIPESTATUS[0]};
+}
+
+
+######################################################################################################
+#
+# generate a colored fragment of HTML file/stream from stdin,
+# to become a complete HTML, th Header and trailer need to get prefixed/postfixed, s.a. ToColorHTMLDOC()
+#
+function ColorizeHTML_file {
+	local DestinationFile=${2}
+	if [ -z "${DestinationFile}" ]; then DestinationFile="${1}.html"; fi
+
+	cat "${1}" | ColorizeHTML >> "${DestinationFile}"
+	exit ${PIPESTATUS[1]};
 }
 #
 ######################################################################################################
