@@ -2,11 +2,21 @@
 
 .PHONY: all remake clean info
 
-BINARYNAME := unset
-ifeq ($(OS),Windows_NT)
-	BINARYNAME := helloworld.exe
+MKF_NAME := $(firstword $(MAKEFILE_LIST))
+MKF_BASED_NAME := $(MKF_NAME:%.mkf=%)
+
+ifeq ($(MKF_BASED_NAME),Makefile)
+	BINARYNAME   := helloworld
 else
-	BINARYNAME := helloworld
+	BINARYNAME   := $(MKF_BASED_NAME)
+endif
+
+# --------------- no edit below please -------------
+
+ifeq ($(OS),Windows_NT)
+	BINARYNAME := $(join $(BINARYNAME),.exe)
+else
+	BINARYNAME := $(join $(BINARYNAME),_ex)
 endif
 
 #BINARYSRC:= helloworld.cpp helppage.c
@@ -28,8 +38,8 @@ BINARYOBJS:=$(BINARYOBJS:.C=.o)
 
 # --- auto assigning inc/lib paths (space separated) to appropriate list of -I/-L/-l directives
 INCSEARCH      := $(foreach d, $(INC_PATHS), -I$d)
-LIB_SHORTNAMES := $(LIB_NAMES:lib%=%)
-LIB_LINK       := $(foreach d, $(LIB_SHORTNAMES:.a=), -l$d)
+LIB_SHORTNAMES := $(LIB_NAMES:lib%=%)  # cut away the prefix 'lib' from 'libsample.a' -> 'sample.a'
+LIB_LINK       := $(foreach d, $(LIB_SHORTNAMES:.a=), -l$d) # cut away the suffix '.a' from 'sample.a' -> 'sample' and prefix '-l' -> '-lsample'
 
 
 $(BINARYNAME): $(BINARYOBJS)

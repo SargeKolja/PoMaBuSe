@@ -4,7 +4,7 @@
 
 /* Compilation & linking:
  *
- * execution:
+ * invocation:
  *      ./helloworld -?
  *      ./helloworld
  *
