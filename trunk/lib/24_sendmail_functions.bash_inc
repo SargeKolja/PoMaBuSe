@@ -3,9 +3,9 @@
 # private functions, please no private changes - except improvements for all.
 # please commit your changes back to the project
 
-# This is the sender of reports in type of e-mails
+# This is the sender of reports in type of e-mails.
 # here, neither ASCII nor RTF/HTML is defined. 
-# This is just a trampoline
+# This is just a trampoline to the final implementation
 
 ######################################################################################################
 function CHECK_sendmail_report_engine {
@@ -16,14 +16,14 @@ function CHECK_sendmail_report_engine {
 		# echo "sendmail is here" >&2
 	else
 		echo "MISSING"
-		# echo "sendmail is absent" >&2
+		echo "sendmail is absent" >&2
 	fi
 }
 
 ######################################################################################################
 # usually called as:
-#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
-#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.examle" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "SUCCESS" "origin@mail.example" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "FAILED"  "origin@mail.example" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
 #
 # sendmail alternative on MSYS2: "mSMTP"
 #		pacman -S mingw-w64-i686-msmtp mingw-w64-i686-libsecret
@@ -58,7 +58,7 @@ function sendmail_report_engine {
 	if [ $? -eq 0 ]; then
 		sendmail_${REPORT_ENGINE_FMT}_report_engine $@
 	else
-		report_error ${1} "${4}" "$(basename ${0}): sendmail_${REPORT_ENGINE_FMT}_report_engine does not exist, but was reqested."
+		report_error ${1} "${4}" "$(basename ${0}): sendmail_${REPORT_ENGINE_FMT}_report_engine does not exist, but was requested."
 		stderr_report_engine $@
 		false
 	fi

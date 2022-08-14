@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# private functions, please no private changes - except improvements for all.
+# please commit your changes back to the project
+
+# This is the sender of reports in type of telegram messenger chatroom postings.
+# Here, neither ASCII nor RTF/HTML is defined. 
+# This is just a trampoline to the final implementation
+
+######################################################################################################
+function CHECK_telegram_report_engine {
+	# echo "check existence of telegram tools" >&2
+	echo -en "  ->  " >&2
+	if which curl >&2 && -n "${$TELEGRAM_TOKEN}" && -n "${$TELEGRAM_CHAT}" && -n "${TELEGRAM_URL}" && -n "${TELEGRAM_FILEURL}" ; then
+		echo "OKAY"
+		# echo "telegram is possible" >&2
+	else
+		echo "MISSING"
+		echo "telegram is not possible, missing tool or setup" >&2
+	fi
+}
+
+######################################################################################################
+# usually called as:
+#		${REPORT_ENGINE} $? "SUCCESS" "unused@telegram.example.com" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#		${REPORT_ENGINE} $? "FAILED"  "unused@telegram.example.com" "myProject Name" "4321" "${compilation_logfile}"  ${last_editors[]}
+#
+function telegram_report_engine {
+	#arg1 = last exit code of compiler
+	#arg2 = "SUCCESS"/"FAILED"
+	#arg3 = Sender Address (like in Mail 'From:', but ignored here)
+	#arg4 = Name of the compiled Project (short, handy name)"
+	#arg5 = revision of the VCS checkout of the compiled Project (SVN revision or Git Hash)
+	#arg6 = logfile with compiler output
+	#arg7..n = list of receiver names (IGNORED, because this goes to a chatroom)
+	echo -e "> reporting via:\n  generic telegram_report_engine $@"
+	
+	if [ -z "${REPORT_ENGINE_FMT}" ]; then
+		REPORT_ENGINE_FMT="ascii"
+	fi;
+	
+	declare -f sendmail_${REPORT_ENGINE_FMT}_report_engine > /dev/null;
+	if [ $? -eq 0 ]; then
+		sendmail_${REPORT_ENGINE_FMT}_report_engine $@
+	else
+		report_error ${1} "${4}" "$(basename ${0}): sendmail_${REPORT_ENGINE_FMT}_report_engine does not exist, but was requested."
+		stderr_report_engine $@
+		false
+	fi
+}
+
+
+######################################################################################################
