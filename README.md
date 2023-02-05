@@ -7,6 +7,9 @@ Build Server? Build Agent! You need often ensure, your code compiles / tests on 
 PoMaBuSe - "Poor Man's Build Server" is a set of Bash4 scripts and config files.
 Very, very easy to configure, started on (1 or more) different linux machines (*ubuntu, debian, ...) as well as on MSYS2 (the bigger/better MinGW).
 
+![Logo](./artwork_pomabuse_1.png?raw=true)
+
+
 It polls your Version Control System for changes and if true, it compiles this code.
 On failure, it f.i. reports by mail (any sendmail compatible mailer) all the developers which committed since the last successful build.
 
