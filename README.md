@@ -1,6 +1,10 @@
 # PoMaBuSe
 
-Build Server? Build Agent! You need often ensure, your code compiles / tests on many different Linux flavors? But Bamboo is too expensive? Dr. Jekyll/Jenkins too complex to get started? Then you should ask Petty Officer Dr. Mabuse! *)
+Build Server? Build Agent!
+You need often ensure, your code compiles / tests on many different Linux flavors?
+But Bamboo is too expensive?
+Dr. Jekyll/Jenkins too complex to get started?
+*Then you should ask Petty Officer Dr. Mabuse!* *)
 
 =Here we go!=
 
